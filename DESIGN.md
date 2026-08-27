@@ -173,15 +173,20 @@ idêntico ao texto completo.
 > **A dica de idioma (item 5) ficou para a fase 4**, junto do comando `lang`.
 > Anunciar `lang pt` antes de ele existir seria pior do que não anunciar.
 
-**O banner mora fora do código**, em `art/banner.txt`, e vira JSON no build. Num
+**O banner mora fora do código**, em `art/banner*.txt`, e vira JSON no build. Num
 `.ts` seria preciso escapar barra invertida e crase a cada troca — e a maioria
 das fontes figlet é feita de barra invertida. Trocar a arte é colar por cima do
 arquivo.
 
-O nome inteiro em ANSI Shadow numa linha só dá 106 colunas, larga demais para as
-80 clássicas; por isso está empilhado em `OLuiz` / `Fernando`, com 69. **Se a arte
-não couber na tela, o boot imprime `OLuizFernando` em texto** — arte embrulhada
-não fica menor, fica quebrada, e é isso que aconteceria no celular.
+**Há um banner por faixa de largura**, e o boot usa o maior que couber inteiro:
+`banner.txt` em ANSI Shadow com 106 colunas para janela de notebook, e
+`banner-small.txt` em Digital com 27 para celular. Todo arquivo cujo nome comece
+com `banner` entra na disputa, ordenado por largura — acrescentar um tamanho
+intermediário é colar mais um arquivo, sem tocar em código.
+
+Arte nunca é embrulhada: embrulhada ela não fica menor, fica quebrada. Se nem a
+menor couber, sobra `OLuizFernando` por extenso, que diz a mesma coisa sem
+parecer defeito.
 
 ### 2.6 Idiomas
 

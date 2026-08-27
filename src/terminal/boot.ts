@@ -31,22 +31,26 @@ const POST: [number, string][] = [
 ];
 
 
-/**
- * O banner vem de `art/banner.txt`, cru, convertido em JSON no build. Para
- * trocar, cole outra arte naquele arquivo — nada aqui precisa mudar.
- */
-const BANNER: string[] = art.banner ?? [];
-
 const widthOf = (lines: string[]) => Math.max(0, ...lines.map((line) => [...line].length));
 
 /**
- * A arte só entra se couber inteira. Embrulhada ela não fica menor, fica
- * quebrada — e numa tela estreita um nome escrito por extenso diz a mesma coisa
- * sem parecer defeito.
+ * Todo `art/banner*.txt` é um candidato, ordenado do mais largo para o mais
+ * estreito. Acrescentar um tamanho é colar mais um arquivo naquele diretório;
+ * nada aqui precisa mudar.
+ */
+const BANNERS: string[][] = Object.entries(art)
+  .filter(([name, lines]) => name.startsWith('banner') && lines.length > 0)
+  .map(([, lines]) => lines)
+  .sort((a, b) => widthOf(b) - widthOf(a));
+
+/**
+ * O maior que couber inteiro. A arte nunca é embrulhada: embrulhada ela não fica
+ * menor, fica quebrada. Se nem a menor couber — um celular muito estreito, ou
+ * uma fonte muito grande — sobra o nome por extenso, que diz a mesma coisa sem
+ * parecer defeito.
  */
 function banner(cols: number): string[] {
-  if (BANNER.length > 0 && widthOf(BANNER) <= cols) return BANNER;
-  return ['OLuizFernando'];
+  return BANNERS.find((lines) => widthOf(lines) <= cols) ?? ['OLuizFernando'];
 }
 
 export interface BootOutput {

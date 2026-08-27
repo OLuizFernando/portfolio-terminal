@@ -174,14 +174,20 @@ await check('man top', has('press'), 'man top');
 // --- Boot ----------------------------------------------------------------
 
 /**
- * A largura da arte vem do arquivo, nunca de um número fixo: o `art/banner.txt`
- * existe para ser trocado, e um teste que assume 100 colunas quebra na primeira
- * troca sem que nada esteja errado.
+ * As larguras vêm dos arquivos, nunca de números fixos: os `art/banner*.txt`
+ * existem para serem trocados, e um teste que assume 100 colunas quebra na
+ * primeira troca sem que nada esteja errado.
  */
-const bannerCols = Math.max(...art.banner.map((line) => [...line].length));
+const artWidth = (lines: string[]) => Math.max(...lines.map((line) => [...line].length));
+const banners = Object.values(art as Record<string, string[]>)
+  .filter((lines) => lines.length > 0)
+  .sort((a, b) => artWidth(b) - artWidth(a));
+
+const widest = banners[0]!;
+const narrowest = banners[banners.length - 1]!;
 
 /** Roda o boot capturando a saída, e devolve quanto tempo levou. */
-async function boot(skipAfterMs: number | null, cols = bannerCols) {
+async function boot(skipAfterMs: number | null, cols = artWidth(widest)) {
   const lines: string[] = [];
   const started = Date.now();
 
@@ -207,7 +213,7 @@ if (full.ms < 1500 || full.ms > 4500) {
 } else console.log(`ok    boot leva ${(full.ms / 1000).toFixed(1)}s ate o prompt`);
 
 count++;
-if (!full.text.includes('Booting Linux') || !full.text.includes(art.banner[0]!)) {
+if (!full.text.includes('Booting Linux') || !full.text.includes(widest[0]!)) {
   failures++;
   console.error('FAIL  boot imprime POST e banner');
 } else console.log('ok    boot imprime POST e banner');
@@ -234,13 +240,24 @@ if (skipped.text !== full.text) {
 
 count++;
 {
-  // Uma coluna a menos do que a arte precisa já basta: o corte é "cabe inteira
-  // ou não entra", sem meio-termo.
-  const narrow = (await boot(10, bannerCols - 1)).text;
-  if (narrow.includes(art.banner[0]!) || !narrow.includes('OLuizFernando')) {
+  // Uma coluna a menos do que a maior precisa já basta: o corte é "cabe inteira
+  // ou não entra", sem meio-termo. Aqui ela deve cair para a arte seguinte, não
+  // direto para o texto.
+  const medium = (await boot(10, artWidth(widest) - 1)).text;
+  if (medium.includes(widest[0]!) || !medium.includes(narrowest[0]!)) {
     failures++;
-    console.error('FAIL  tela estreita troca a arte por texto');
-  } else console.log('ok    tela estreita troca a arte por texto');
+    console.error('FAIL  tela menor cai para a arte menor');
+  } else console.log('ok    tela menor cai para a arte menor');
+}
+
+count++;
+{
+  // Abaixo da menor arte não sobra alternativa: aí sim, o nome por extenso.
+  const tiny = (await boot(10, artWidth(narrowest) - 1)).text;
+  if (tiny.includes(narrowest[0]!) || !tiny.includes('OLuizFernando')) {
+    failures++;
+    console.error('FAIL  tela minuscula troca a arte por texto');
+  } else console.log('ok    tela minuscula troca a arte por texto');
 }
 
 // Tab-completion

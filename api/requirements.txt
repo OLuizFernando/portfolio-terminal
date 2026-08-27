@@ -1,2 +1,8 @@
+# uvicorn sem o extra [standard] de propósito. Ele traz watchfiles (só para
+# --reload), websockets (não há endpoint WebSocket aqui), PyYAML (só para
+# --log-config) e uvloop, que são 24MB para responder um JSON cacheado por 2s.
+#
+# É o mesmo critério que fez o probe.py ler /proc na mão em vez de usar psutil:
+# a dependência não pode custar mais do que o trabalho que ela poupa.
 fastapi>=0.115
-uvicorn[standard]>=0.32
+uvicorn>=0.32

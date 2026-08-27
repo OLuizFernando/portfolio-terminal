@@ -1,0 +1,27 @@
+{
+  "name": "portfolio-terminal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "prebuild": "node scripts/build-fs.mjs",
+    "predev": "node scripts/build-fs.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "fs": "node scripts/build-fs.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/build-fs.mjs && esbuild test/shell.test.ts --bundle --platform=node --format=esm --loader:.json=json --outfile=node_modules/.cache/shell.test.mjs --log-level=error && node node_modules/.cache/shell.test.mjs"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-webgl": "^0.18.0",
+    "@xterm/xterm": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3"
+  }
+}

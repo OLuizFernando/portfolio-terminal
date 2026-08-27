@@ -1,0 +1,9 @@
+node_modules/
+dist/
+src/generated/
+.DS_Store
+
+# Fontes do DOOM: baixadas por ./wasm/fetch-sources.sh, só necessárias para
+# recompilar. Os artefatos prontos ficam versionados em public/doom/.
+vendor/
+wasm/build/

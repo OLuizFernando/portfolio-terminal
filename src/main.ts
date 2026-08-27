@@ -9,8 +9,11 @@ import { DEFAULT_FONT_SIZE, Env } from './shell/env';
 import { execute } from './shell/executor';
 import { complete } from './terminal/completion';
 import { LineEditor } from './terminal/lineEditor';
+import { runBoot } from './terminal/boot';
 import { createTerminal } from './terminal/terminal';
 import { loadHistory, loadPrefs, saveHistory, savePrefs } from './storage';
+import { mountProc } from './system/proc';
+import { SystemClient } from './system/stats';
 
 const manifest = rawManifest as unknown as Manifest;
 
@@ -38,6 +41,9 @@ function main(): void {
   const vfs = new Vfs(mount(env.lang));
   const registry = buildRegistry();
   mountUsrBin(vfs, registry);
+  mountProc(vfs);
+
+  const system = new SystemClient();
 
   let alive = true;
 
@@ -70,6 +76,7 @@ function main(): void {
     env,
     term,
     registry,
+    system,
     savePrefs: () => savePrefs({ lang: env.lang, fontSize: env.fontSize }),
   };
 
@@ -88,16 +95,13 @@ function main(): void {
     },
   });
 
-  handle.term.onData((data) => {
-    if (alive) editor.handle(data);
-  });
+  // Durante o boot o editor não existe para o teclado: as teclas só servem para
+  // pular a sequência, e sairiam ecoando no meio do dmesg.
+  let booting = true;
 
-  // Placeholder do boot: a sequência completa (POST, banner, dados reais do Pi)
-  // é da fase 3. Por ora, só o mínimo para o prompt fazer sentido.
-  handle.print(
-    `Linux ${env.host} 6.6.0-rpi #1 SMP aarch64\n\n` +
-      `Type 'help' to get started, 'ls' to look around.\n\n`,
-  );
+  handle.term.onData((data) => {
+    if (alive && !booting) editor.handle(data);
+  });
 
   // Gancho de desenvolvimento: dá acesso ao terminal pelo console para medir
   // throughput de escrita. Não existe no build de produção.
@@ -105,8 +109,24 @@ function main(): void {
     (window as unknown as Record<string, unknown>).__term = handle.term;
   }
 
-  editor.start();
   handle.term.focus();
+
+  void runBoot({
+    output: {
+      print: (text) => handle.print(text),
+      get cols() {
+        return handle.term.cols;
+      },
+    },
+    system,
+    onSkippable: (skip) => {
+      const listener = handle.term.onData(skip);
+      return () => listener.dispose();
+    },
+  }).finally(() => {
+    booting = false;
+    editor.start();
+  });
 }
 
 main();

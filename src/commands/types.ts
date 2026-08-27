@@ -1,5 +1,6 @@
 import type { Vfs } from '../fs/vfs';
 import type { Env } from '../shell/env';
+import type { SystemClient } from '../system/stats';
 
 /** O que um comando pode fazer com o terminal além de escrever em stdout. */
 export interface TerminalControl {
@@ -29,6 +30,8 @@ export interface ShellContext {
   env: Env;
   term: TerminalControl;
   registry: CommandRegistry;
+  /** Acesso à máquina de verdade. Pode estar fora do ar; os comandos sabem disso. */
+  system: SystemClient;
   /** Grava as preferências da sessão (idioma, fonte) no navegador. */
   savePrefs(): void;
 }

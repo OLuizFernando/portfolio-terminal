@@ -1,31 +1,8 @@
 import { basename, contract, dirname, expand, resolve } from '../fs/path';
+import { isProcPath, readProc } from '../system/proc';
+import { parseFlags } from './flags';
 import { columns, formatDate, modeOf, sizeOf } from './format';
 import { fail, fromLines, ok, toLines, type CommandSpec, type Invocation } from './types';
-
-/** Separa flags curtas (`-al` = `-a -l`) dos operandos. */
-function parseFlags(
-  argv: string[],
-  known: string,
-  command: string,
-): { flags: Set<string>; operands: string[]; error?: string } {
-  const flags = new Set<string>();
-  const operands: string[] = [];
-
-  for (const arg of argv.slice(1)) {
-    if (arg.length > 1 && arg.startsWith('-') && !arg.startsWith('--')) {
-      for (const flag of arg.slice(1)) {
-        if (!known.includes(flag)) {
-          return { flags, operands, error: `${command}: invalid option -- '${flag}'\n` };
-        }
-        flags.add(flag);
-      }
-    } else {
-      operands.push(arg);
-    }
-  }
-
-  return { flags, operands };
-}
 
 const decorate = (name: string, isDir: boolean) => (isDir ? `${name}/` : name);
 
@@ -133,7 +110,7 @@ const cat: CommandSpec = {
   usage: 'cat [file...]',
   man: 'Prints files to the output. With no arguments, echoes the input it\nreceives from a pipe.',
   primary: true,
-  run({ argv, stdin, ctx }: Invocation) {
+  async run({ argv, stdin, ctx }: Invocation) {
     if (argv.length === 1) return ok(stdin);
 
     let stdout = '';
@@ -150,6 +127,15 @@ const cat: CommandSpec = {
       } else if (node.kind === 'dir') {
         stderr += `cat: ${target}: Is a directory\n`;
         code = 1;
+      } else if (isProcPath(path)) {
+        // Os arquivos de /proc existem na árvore vazios: o conteúdo é lido da
+        // máquina de verdade na hora, como faria um /proc de verdade.
+        try {
+          stdout += await readProc(basename(path));
+        } catch {
+          stderr += `cat: ${target}: cannot reach the machine\n`;
+          code = 1;
+        }
       } else {
         stdout += node.content.endsWith('\n') || node.content === '' ? node.content : node.content + '\n';
       }

@@ -2,12 +2,13 @@ import type { Vfs } from '../fs/vfs';
 import { doomCommands } from './doom';
 import { fontCommands } from './font';
 import { navCommands } from './nav';
+import { systemCommands } from './system';
 import { textCommands } from './text';
 import type { CommandRegistry, CommandSpec } from './types';
 
 export function buildRegistry(extra: CommandSpec[] = []): CommandRegistry {
   const registry: CommandRegistry = new Map();
-  for (const spec of [...navCommands, ...textCommands, ...doomCommands, ...fontCommands, ...extra]) registry.set(spec.name, spec);
+  for (const spec of [...navCommands, ...textCommands, ...systemCommands, ...doomCommands, ...fontCommands, ...extra]) registry.set(spec.name, spec);
   return registry;
 }
 

@@ -462,11 +462,21 @@ Escrever conteúdo novo = criar um `.txt` e commitar.
 **Deploy:** manual, e o build roda no Pi: `ssh raspberrypi deploy-portfolio`.
 
 A lógica mora em **`deploy/deploy.sh`, versionada**, e o `/usr/local/bin/deploy-portfolio`
-é um wrapper de quinze linhas que faz o `git pull --ff-only` e então dá `exec` no
-script do repositório. A divisão existe porque o bash lê script em pedaços, e um
-pull que troca o arquivo no meio da própria execução dá comportamento esquisito —
-como o pull termina antes do `exec`, o bash só começa a ler o `deploy.sh` quando
-ele já está na versão final.
+é um wrapper fino (fonte em `deploy/deploy-portfolio`) que sincroniza com o remoto
+e então dá `exec` no script do repositório. A divisão existe porque o bash lê
+script em pedaços, e um sync que trocasse o arquivo no meio da própria execução
+daria comportamento esquisito — como o sync termina antes do `exec`, o bash só
+começa a ler o `deploy.sh` quando ele já está na versão final.
+
+O wrapper é o único arquivo que vive fora do repositório, e o `deploy.sh`
+**reinstala a cópia sozinho** quando o fonte muda. É seguro porque, àquela altura,
+o `exec` já trocou a imagem do processo: ninguém mais está lendo aquele arquivo.
+
+> **O sync é `fetch` + `reset --hard origin/main`, não `pull --ff-only`.** O Pi é
+> alvo de deploy, não lugar de trabalho: o certo é espelhar o remoto, não conciliar
+> histórias. O `--ff-only` recusava depois de um push forçado e obrigava a entrar
+> no Pi para desatolar na mão. O commit descartado continua no reflog do Pi, e o
+> script avisa quando descarta algo — inclusive alteração não commitada.
 
 > Ele já morou inteiro fora do repositório. Passou a valer versionar quando o
 > deploy deixou de ser "pull e build": com venv, dependências em duas linguagens e

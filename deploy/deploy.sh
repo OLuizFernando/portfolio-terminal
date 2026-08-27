@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #
 # O deploy inteiro, do lado do Pi. Não é chamado direto: quem chama é o
-# /usr/local/bin/deploy-portfolio, que faz o `git pull` e só então executa este
-# arquivo — o bash lê script em pedaços, e um pull que troca o arquivo no meio da
-# própria execução dá comportamento esquisito.
+# /usr/local/bin/deploy-portfolio (fonte em deploy/deploy-portfolio), que
+# sincroniza com o remoto e só então executa este arquivo — o bash lê script em
+# pedaços, e um sync que trocasse o arquivo no meio da própria execução daria
+# comportamento esquisito.
 #
 # Cada passo é condicional: rodar num commit que só mexeu em texto não deve
 # reinstalar dependência nem reiniciar serviço.
@@ -62,6 +63,14 @@ main() {
   if [ "$restart_api" = true ]; then
     echo "[deploy] reiniciando a API..."
     sudo -n systemctl restart portfolio-api
+  fi
+
+  # O wrapper é o único arquivo que vive fora do repositório. Reinstalar aqui
+  # fecha a única porta por onde ele poderia divergir — e é seguro porque o
+  # `exec` já trocou a imagem do processo: ninguém mais está lendo aquele arquivo.
+  if changed deploy/deploy-portfolio; then
+    echo "[deploy] wrapper mudou, reinstalando..."
+    sudo -n install -m 755 deploy/deploy-portfolio /usr/local/bin/deploy-portfolio
   fi
 
   if changed deploy/nginx.conf; then

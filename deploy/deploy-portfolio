@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# O comando que se roda no Pi: `ssh raspberrypi deploy-portfolio`.
+#
+# Instalado em /usr/local/bin/ — o deploy.sh reinstala sozinho quando este
+# arquivo muda, então edite aqui, nunca a cópia.
+#
+# Ele é fino de propósito. Toda a lógica mora em deploy/deploy.sh, versionada,
+# porque o bash lê script em pedaços e um sync que trocasse o arquivo no meio da
+# própria execução daria comportamento esquisito. Aqui o sync termina ANTES do
+# exec, então o bash só começa a ler o deploy.sh quando ele já está na versão
+# final.
+
+set -euo pipefail
+
+cd /srv/portfolio
+
+before=$(git rev-parse HEAD)
+git fetch --quiet origin
+after=$(git rev-parse origin/main)
+
+if [ "$before" = "$after" ]; then
+  echo "[deploy] nada novo ($(git log -1 --format='%h %s'))"
+  exit 0
+fi
+
+# O Pi é alvo de deploy, não lugar de trabalho: o certo aqui é espelhar o
+# remoto, não conciliar histórias. Um `pull --ff-only` recusava depois de um
+# push forçado, e era preciso entrar no Pi para desatolar na mão.
+if ! git merge-base --is-ancestor "$before" "$after"; then
+  echo "[deploy] o remoto foi reescrito; descartando o commit local $(git rev-parse --short "$before")"
+  echo "[deploy] (ele continua recuperável pelo reflog do Pi por 90 dias)"
+fi
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "[deploy] AVISO: havia alteracao nao commitada no Pi, e ela sera perdida:"
+  git status --short | sed 's/^/  /'
+fi
+
+git reset --hard --quiet "$after"
+
+exec bash deploy/deploy.sh "$before" "$after"

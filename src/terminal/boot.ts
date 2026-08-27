@@ -15,8 +15,8 @@ import { SystemOffline, type SystemClient, type Stats } from '../system/stats';
 
 /** Linhas de kernel, no formato do `dmesg`. Genéricas de propósito. */
 const POST: [number, string][] = [
-  [0.0, 'Booting Linux on physical CPU 0x0000000000 [0x410fd083]'],
-  [0.0, 'Machine model: Raspberry Pi 4 Model B'],
+  [0.0, 'Booting Linux on physical CPU 0x0000000000 [0x414fd0b1]'],
+  [0.0, 'Machine model: Raspberry Pi 5 Model B'],
   [0.0, 'efi: UEFI not found.'],
   [0.132, 'Memory: 8050688K/8388608K available'],
   [0.418, 'SMP: Total of 4 processors activated.'],

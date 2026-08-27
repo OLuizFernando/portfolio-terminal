@@ -108,7 +108,7 @@ commitado cai no mtime do disco.
 
 ## Deploy
 
-Raspberry Pi 8GB, nginx na porta 8080 servindo `dist/` e fazendo proxy de `/api`
+Raspberry Pi 5 (8GB), nginx na porta 8080 servindo `dist/` e fazendo proxy de `/api`
 para o uvicorn em 127.0.0.1:8000, tudo atrás de Cloudflare Tunnel. Os arquivos
 prontos estão em `deploy/`. Deploy é manual e por decisão registrada não há CI
 (`DESIGN.md` §4).

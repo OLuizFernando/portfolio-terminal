@@ -1,6 +1,6 @@
 # Portfólio Terminal — Documento de Design
 
-> Portfólio pessoal do Luiz Fernando, hospedado em Raspberry Pi 8GB, no formato de um
+> Portfólio pessoal do Luiz Fernando, hospedado em Raspberry Pi 5 (8GB), no formato de um
 > terminal Unix simulado e navegável.
 >
 > Última atualização: 2026-08-27
@@ -386,7 +386,7 @@ Visitante
 Cloudflare (túnel já configurado, cache de borda)
    │
    ▼
-Raspberry Pi 8GB
+Raspberry Pi 5 (8GB)
    ├── nginx  :8080   → serve /dist (estático) e faz proxy de /api
    └── FastAPI/uvicorn (systemd) → /api/stats, /api/log
 ```
@@ -477,7 +477,7 @@ diretório é servido direto, e os nomes com hash do Vite dão URL nova a cada v
 
 ### 3.5 Infraestrutura (já existente)
 
-- Raspberry Pi 8GB
+- Raspberry Pi 5 (8GB)
 - Exposto via **Cloudflare Tunnel** — sem portas abertas no roteador, IP residencial
   escondido, HTTPS de graça, imune a CGNAT
 - Domínio: **oluizfernando.com.br**

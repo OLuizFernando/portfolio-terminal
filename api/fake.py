@@ -44,10 +44,10 @@ def snapshot() -> dict[str, object]:
     return {
         "generatedAt": int(time.time()),
         "hostname": os.uname().nodename,
-        "model": "Raspberry Pi 4 Model B Rev 1.5",
+        "model": "Raspberry Pi 5 Model B Rev 1.1",
         "kernel": {
-            "release": "6.6.51-v8+",
-            "version": "#1 SMP PREEMPT Debian 1:6.6.51-1+rpt3",
+            "release": "6.12.47+rpt-rpi-2712",
+            "version": "#1 SMP PREEMPT Debian 1:6.12.47-1+rpt1 (2025-09-16)",
             "machine": "aarch64",
         },
         "uptimeSec": time.time() - BOOT,
@@ -57,9 +57,9 @@ def snapshot() -> dict[str, object]:
             "total": 148,
         },
         "cpu": {
-            "name": "Cortex-A72",
+            "name": "Cortex-A76",
             "cores": 4,
-            "mhz": 1800.0,
+            "mhz": 2400.0,
             "usagePct": max(_wobble(4.5, 3.5, 19), 0.0),
             "tempC": _wobble(47.5, 2.5, 61),
         },
@@ -125,10 +125,10 @@ def proc(name: str) -> str:
             f"Features\t: fp asimd evtstrm crc32 cpuid\n"
             f"CPU implementer\t: 0x41\n"
             f"CPU architecture: 8\n"
-            f"CPU part\t: 0xd08\n"
+            f"CPU part\t: 0xd0b\n"
             for n in range(int(cpu["cores"]))
         ]
-        return "\n".join(blocks) + f"\nHardware\t: BCM2711\nModel\t\t: {snap['model']}\n"
+        return "\n".join(blocks) + f"\nHardware\t: BCM2712\nModel\t\t: {snap['model']}\n"
 
     if name == "meminfo":
         mem = snap["mem"]

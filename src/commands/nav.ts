@@ -1,0 +1,326 @@
+import { basename, contract, dirname, expand, resolve } from '../fs/path';
+import { columns, formatDate, modeOf, sizeOf } from './format';
+import { fail, fromLines, ok, toLines, type CommandSpec, type Invocation } from './types';
+
+/** Separa flags curtas (`-al` = `-a -l`) dos operandos. */
+function parseFlags(
+  argv: string[],
+  known: string,
+  command: string,
+): { flags: Set<string>; operands: string[]; error?: string } {
+  const flags = new Set<string>();
+  const operands: string[] = [];
+
+  for (const arg of argv.slice(1)) {
+    if (arg.length > 1 && arg.startsWith('-') && !arg.startsWith('--')) {
+      for (const flag of arg.slice(1)) {
+        if (!known.includes(flag)) {
+          return { flags, operands, error: `${command}: invalid option -- '${flag}'\n` };
+        }
+        flags.add(flag);
+      }
+    } else {
+      operands.push(arg);
+    }
+  }
+
+  return { flags, operands };
+}
+
+const decorate = (name: string, isDir: boolean) => (isDir ? `${name}/` : name);
+
+const ls: CommandSpec = {
+  name: 'ls',
+  summary: 'list directory contents',
+  usage: 'ls [-a] [-l] [path...]',
+  man: 'Lists files and directories.\n\n  -a  include entries starting with a dot\n  -l  long format: permissions, size, modification date\n\nDirectories are printed with a trailing slash.\nModification dates are real: they come from the last git commit that\ntouched each file.',
+  primary: true,
+  run({ argv, piped, ctx }: Invocation) {
+    const { flags, operands, error } = parseFlags(argv, 'al', 'ls');
+    if (error) return fail(error, 2);
+
+    const all = flags.has('a');
+    const long = flags.has('l');
+    const targets = operands.length > 0 ? operands : ['.'];
+
+    const chunks: string[] = [];
+    let stderr = '';
+    let code = 0;
+
+    const renderDir = (path: string) => {
+      const entries = ctx.vfs.list(path, all);
+      const listing = all
+        ? [{ name: '.', node: ctx.vfs.lookup(path)! }, { name: '..', node: ctx.vfs.lookup(dirname(path))! }, ...entries]
+        : entries;
+
+      // Numa pipe, uma entrada por linha e sem barra — assim `ls | grep projects`
+      // e `ls | wc -l` se comportam como o visitante espera.
+      if (piped) return fromLines(listing.map((e) => e.name));
+
+      if (!long) {
+        return columns(listing.map((e) => decorate(e.name, e.node.kind === 'dir')), ctx.term.cols);
+      }
+
+      const sizes = listing.map((e) => String(sizeOf(e.node)));
+      const sizeWidth = Math.max(0, ...sizes.map((s) => s.length));
+      const lines = listing.map(
+        (entry, i) =>
+          `${modeOf(entry.node)} 1 ${ctx.env.user} ${ctx.env.user} ${sizes[i]!.padStart(sizeWidth)} ` +
+          `${formatDate(entry.node.mtime)} ${decorate(entry.name, entry.node.kind === 'dir')}`,
+      );
+      return `total ${listing.length}\n${fromLines(lines)}`;
+    };
+
+    for (const target of targets) {
+      const path = resolve(ctx.env.cwd, expand(target, ctx.env.home));
+      const node = ctx.vfs.lookup(path);
+
+      if (!node) {
+        stderr += `ls: cannot access '${target}': No such file or directory\n`;
+        code = 2;
+        continue;
+      }
+
+      const header = targets.length > 1 ? `${target}:\n` : '';
+
+      if (node.kind === 'file') {
+        chunks.push(long
+          ? `${modeOf(node)} 1 ${ctx.env.user} ${ctx.env.user} ${sizeOf(node)} ${formatDate(node.mtime)} ${target}\n`
+          : `${target}\n`);
+      } else {
+        chunks.push(header + renderDir(path));
+      }
+    }
+
+    return { stdout: chunks.join(targets.length > 1 ? '\n' : ''), stderr, code };
+  },
+};
+
+const cd: CommandSpec = {
+  name: 'cd',
+  summary: 'change the current directory',
+  usage: 'cd [path]',
+  man: 'Changes the current directory.\n\n  cd        go home\n  cd -      go back to the previous directory\n  cd ..     go up one level',
+  primary: true,
+  run({ argv, ctx }: Invocation) {
+    const raw = argv[1] ?? '~';
+    const target = raw === '-' ? ctx.env.oldcwd : resolve(ctx.env.cwd, expand(raw, ctx.env.home));
+    const node = ctx.vfs.lookup(target);
+
+    if (!node) return fail(`cd: ${raw}: No such file or directory\n`);
+    if (node.kind !== 'dir') return fail(`cd: ${raw}: Not a directory\n`);
+
+    ctx.env.oldcwd = ctx.env.cwd;
+    ctx.env.cwd = target;
+
+    // `cd -` imprime o destino, como no bash.
+    return ok(raw === '-' ? `${contract(target, ctx.env.home)}\n` : '');
+  },
+};
+
+const pwd: CommandSpec = {
+  name: 'pwd',
+  summary: 'print the current directory',
+  usage: 'pwd',
+  run({ ctx }: Invocation) {
+    return ok(`${ctx.env.cwd}\n`);
+  },
+};
+
+const cat: CommandSpec = {
+  name: 'cat',
+  summary: 'print the contents of a file',
+  usage: 'cat [file...]',
+  man: 'Prints files to the output. With no arguments, echoes the input it\nreceives from a pipe.',
+  primary: true,
+  run({ argv, stdin, ctx }: Invocation) {
+    if (argv.length === 1) return ok(stdin);
+
+    let stdout = '';
+    let stderr = '';
+    let code = 0;
+
+    for (const target of argv.slice(1)) {
+      const path = resolve(ctx.env.cwd, expand(target, ctx.env.home));
+      const node = ctx.vfs.lookup(path);
+
+      if (!node) {
+        stderr += `cat: ${target}: No such file or directory\n`;
+        code = 1;
+      } else if (node.kind === 'dir') {
+        stderr += `cat: ${target}: Is a directory\n`;
+        code = 1;
+      } else {
+        stdout += node.content.endsWith('\n') || node.content === '' ? node.content : node.content + '\n';
+      }
+    }
+
+    return { stdout, stderr, code };
+  },
+};
+
+const tree: CommandSpec = {
+  name: 'tree',
+  summary: 'show the directory structure',
+  usage: 'tree [-a] [path]',
+  run({ argv, ctx }: Invocation) {
+    const { flags, operands, error } = parseFlags(argv, 'a', 'tree');
+    if (error) return fail(error, 2);
+
+    const raw = operands[0] ?? '.';
+    const root = resolve(ctx.env.cwd, expand(raw, ctx.env.home));
+    const node = ctx.vfs.lookup(root);
+
+    if (!node) return fail(`tree: ${raw}: No such file or directory\n`);
+    if (node.kind === 'file') return ok(`${raw}\n\n0 directories, 1 file\n`);
+
+    let dirs = 0;
+    let files = 0;
+    const lines = [contract(root, ctx.env.home)];
+
+    const walk = (path: string, prefix: string) => {
+      const entries = ctx.vfs.list(path, flags.has('a'));
+      entries.forEach((entry, index) => {
+        const last = index === entries.length - 1;
+        const isDir = entry.node.kind === 'dir';
+        if (isDir) dirs++;
+        else files++;
+        lines.push(`${prefix}${last ? '└── ' : '├── '}${decorate(entry.name, isDir)}`);
+        if (isDir) walk(`${path}/${entry.name}`, `${prefix}${last ? '    ' : '│   '}`);
+      });
+    };
+
+    walk(root, '');
+    lines.push('', `${dirs} ${dirs === 1 ? 'directory' : 'directories'}, ${files} ${files === 1 ? 'file' : 'files'}`);
+    return ok(fromLines(lines));
+  },
+};
+
+const clear: CommandSpec = {
+  name: 'clear',
+  summary: 'clear the screen',
+  usage: 'clear',
+  run({ ctx }: Invocation) {
+    ctx.term.clear();
+    return ok();
+  },
+};
+
+const help: CommandSpec = {
+  name: 'help',
+  summary: 'show the available commands',
+  usage: 'help [--all]',
+  man: 'With no arguments, shows the handful of commands you need to get around.\n`help --all` lists every command that exists.',
+  primary: true,
+  run({ argv, ctx }: Invocation) {
+    const all = argv.includes('--all');
+    const specs = [...ctx.registry.values()].filter((spec) => !spec.hidden && (all || spec.primary));
+    const width = Math.max(...specs.map((spec) => spec.name.length));
+    const lines = specs
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((spec) => `  \x1b[1m${spec.name.padEnd(width)}\x1b[0m  ${spec.summary}`);
+
+    const header = all ? 'every command on this machine:' : 'the essentials:';
+    const footer = all
+      ? "\n'man <command>' explains any of them in detail."
+      : "\n'help --all' lists everything, 'man <command>' explains one in detail.";
+
+    return ok(`${header}\n${fromLines(lines)}${footer}\n`);
+  },
+};
+
+const man: CommandSpec = {
+  name: 'man',
+  summary: 'show the manual for a command',
+  usage: 'man <command>',
+  run({ argv, ctx }: Invocation) {
+    const name = argv[1];
+    if (!name) return fail('What manual page do you want?\n');
+
+    const spec = ctx.registry.get(name);
+    if (!spec || spec.hidden) return fail(`No manual entry for ${name}\n`);
+
+    const body = spec.man ?? spec.summary.charAt(0).toUpperCase() + spec.summary.slice(1) + '.';
+    return ok(`\x1b[1mNAME\x1b[0m\n  ${spec.name} — ${spec.summary}\n\n\x1b[1mUSAGE\x1b[0m\n  ${spec.usage}\n\n\x1b[1mDESCRIPTION\x1b[0m\n${body
+      .split('\n')
+      .map((line) => (line ? `  ${line}` : ''))
+      .join('\n')}\n`);
+  },
+};
+
+const history: CommandSpec = {
+  name: 'history',
+  summary: 'show the commands you have typed',
+  usage: 'history',
+  man: 'Your history lives in this browser only and survives a reload.\nIt is also readable at ~/.bash_history.',
+  run({ ctx }: Invocation) {
+    const width = String(ctx.env.history.length).length;
+    return ok(fromLines(ctx.env.history.map((entry, i) => `  ${String(i + 1).padStart(width)}  ${entry}`)));
+  },
+};
+
+const exit: CommandSpec = {
+  name: 'exit',
+  summary: 'close the session',
+  usage: 'exit',
+  run({ ctx }: Invocation) {
+    ctx.term.exit();
+    return ok();
+  },
+};
+
+const whichName = (path: string) => basename(path);
+
+const find: CommandSpec = {
+  name: 'find',
+  summary: 'search for files by name',
+  usage: 'find [path] [-name <pattern>] [-type f|d]',
+  man: 'Walks a directory tree and prints what it finds.\n\n  -name <pattern>  match the file name (accepts * and ?)\n  -type f          files only\n  -type d          directories only',
+  run({ argv, ctx }: Invocation) {
+    const operands: string[] = [];
+    let namePattern: RegExp | null = null;
+    let type: 'f' | 'd' | null = null;
+
+    for (let i = 1; i < argv.length; i++) {
+      const arg = argv[i]!;
+      if (arg === '-name') {
+        const pattern = argv[++i];
+        if (!pattern) return fail("find: missing argument to '-name'\n", 2);
+        namePattern = new RegExp(
+          '^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$',
+        );
+      } else if (arg === '-type') {
+        const value = argv[++i];
+        if (value !== 'f' && value !== 'd') return fail(`find: unknown argument to -type: ${value ?? ''}\n`, 2);
+        type = value;
+      } else if (arg.startsWith('-')) {
+        return fail(`find: unknown predicate '${arg}'\n`, 2);
+      } else {
+        operands.push(arg);
+      }
+    }
+
+    const raw = operands[0] ?? '.';
+    const root = resolve(ctx.env.cwd, expand(raw, ctx.env.home));
+    if (!ctx.vfs.exists(root)) return fail(`find: '${raw}': No such file or directory\n`);
+
+    const results = ctx.vfs.walk(root).filter((path) => {
+      const node = ctx.vfs.lookup(path)!;
+      if (type === 'f' && node.kind !== 'file') return false;
+      if (type === 'd' && node.kind !== 'dir') return false;
+      if (namePattern && !namePattern.test(whichName(path))) return false;
+      return true;
+    });
+
+    // Reapresenta relativo quando a busca começou relativa, como o find faz.
+    const prefix = ctx.env.cwd === '/' ? '/' : ctx.env.cwd + '/';
+    const display = raw.startsWith('/') || raw.startsWith('~')
+      ? results
+      : results.map((p) => (p === ctx.env.cwd ? raw : p.startsWith(prefix) ? `${raw === '.' ? './' : raw + '/'}${p.slice(prefix.length)}` : p));
+
+    return ok(fromLines(display));
+  },
+};
+
+export const navCommands: CommandSpec[] = [ls, cd, pwd, cat, tree, find, clear, help, man, history, exit];
+export { toLines };

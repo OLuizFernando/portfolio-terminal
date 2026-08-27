@@ -21,9 +21,14 @@ ExecStart=/srv/portfolio/.venv/bin/python -m uvicorn api.main:app --host 127.0.0
 Restart=on-failure
 RestartSec=5
 
+# O JSONL da telemetria. O systemd cria /var/lib/portfolio com o dono certo e
+# abre a escrita ali apesar do ProtectSystem=strict — que é justamente o ponto:
+# a API escreve num diretório, e em nenhum outro lugar do disco.
+StateDirectory=portfolio
+
 # Só escuta em 127.0.0.1 e quem fala com o mundo é o nginx. Estas restrições são
-# baratas e fecham o que uma leitura de /proc não precisa: escrever em disco,
-# ganhar privilégio, ou ver o /home de alguém.
+# baratas e fecham o que a API não precisa: ganhar privilégio, ver o /home de
+# alguém, ou escrever fora do StateDirectory.
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

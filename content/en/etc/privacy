@@ -1,0 +1,67 @@
+PRIVACY
+=======
+
+This terminal records the commands typed into it. Here is exactly what that
+means, in the detail I would want if I were on your side of the connection.
+
+
+WHAT IS RECORDED
+
+    the first word of the line      `cd projects` is recorded as `cd`
+    whether it is a real command    which is what splits the two lists
+    the country                     from Cloudflare's CF-IPCountry header
+    the time it arrived             stamped by the server, not by your clock
+
+That is the whole record. One line of the file looks like this:
+
+    {"at":"2026-08-27T19:47:40Z","cmd":"ls","ok":true,"cc":"BR"}
+
+
+WHAT IS NOT RECORDED
+
+    No IP address.
+    No cookie. This site sets none, for anything.
+    No session identifier -- not even a random one, which is an identifier
+        with a friendlier name.
+    Nothing after the first word. Whatever you `echo` stays with you.
+    Not your clock. A machine's clock drifts in its own particular way, and
+        that drift recognises the machine.
+
+Two lines from the same visitor are indistinguishable from two lines from two
+visitors. That is on purpose: it is what stops anyone -- me included -- from
+reassembling a session out of the file.
+
+
+WHAT IT IS FOR
+
+The `stats` command. The commands people run, and the things people typed that
+are not commands here, which is the most honest list of what this place is
+missing.
+
+
+WHERE IT GOES
+
+A JSON Lines file on the Raspberry Pi that is serving you this page. It goes
+nowhere else. There is no analytics script on this site, no tag manager, and no
+third party in the path except Cloudflare, which routes the connection and
+tells the server which country it came from.
+
+To keep the write endpoint from being hammered, nginx counts requests per
+address in memory. That counter is never written to disk and is gone when the
+process restarts.
+
+
+WHAT STAYS IN YOUR BROWSER
+
+Your command history and your preferences -- font size, CRT -- live in this
+browser's localStorage and are never sent anywhere. Clearing this site's data
+in your browser removes them. `cat ~/.bash_history` shows you the history part.
+
+
+THE CODE
+
+    api/usage.py             what writes the file
+    src/system/telemetry.ts  what sends it from here
+
+Both are public. If this file and that code ever disagree, the code is what is
+actually running, and this file is a bug -- tell me about it.

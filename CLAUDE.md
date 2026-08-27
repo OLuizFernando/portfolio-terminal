@@ -13,7 +13,7 @@ código no mesmo commit.
 ```
 npm run dev       vite, com o manifesto regenerado antes
 npm run build     tsc --noEmit && vite build → dist/
-npm test          85 smoke tests headless (esbuild + node, sem navegador)
+npm test          90 smoke tests headless (esbuild + node, sem navegador)
 npm run fs        regenera src/generated/manifest.json
 ```
 
@@ -102,6 +102,16 @@ Cada uma destas já custou tempo. Não as reintroduza.
     dele (latin, latin-ext, cyrillic) não cobrem `█ ╗ ═`, que são o banner inteiro.
     Os arquivos em `public/fonts/` vêm do release oficial por causa disso; ao
     trocar de versão, confira no DOM que `█` avança o mesmo que `M`.
+17. **`limit_req_zone` não existe dentro de `server`.** Ela mora em
+    `deploy/nginx-limits.conf`, que vai em `/etc/nginx/conf.d/`, e os dois arquivos
+    do nginx se instalam juntos — meio caminho deixa uma configuração que o
+    `nginx -t` recusa, com o nginx já recarregando.
+18. **A chave do rate limit é o `CF-Connecting-IP`.** Atrás do túnel, o
+    `remote_addr` é 127.0.0.1 para o mundo inteiro; limitar por ele limita todo
+    mundo junto na primeira rajada de uma pessoa só.
+19. **A telemetria guarda a primeira palavra e nada mais**, e o `/etc/privacy`
+    promete isso por escrito. Mudar o que `src/system/telemetry.ts` manda sem
+    mudar o arquivo transforma o texto numa mentira publicada.
 
 ## Adicionar um comando
 
@@ -119,6 +129,9 @@ troca, que é o atrito que a pasta existe para evitar (`art/README.md`).
 Os `.txt` em `content/<lang>/` espelham a raiz do filesystem simulado. O mtime que o
 `ls -l` mostra é a data do último commit git que tocou o arquivo — arquivo não
 commitado cai no mtime do disco.
+
+O `/etc/privacy` é conteúdo lido por gente e por comando ao mesmo tempo: ele
+declara a telemetria, e tem que continuar batendo com o que o código manda.
 
 A JetBrains Mono em `public/fonts/` também é colada, não gerada — o `README.md` de
 lá diz de onde ela vem e por que não é a do Google Fonts.

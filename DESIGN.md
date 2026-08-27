@@ -400,18 +400,47 @@ contra 28,57ms de orçamento.
 
 ### 2.10 Telemetria
 
-Os comandos digitados pelos visitantes **são registrados**.
+Os comandos digitados pelos visitantes **são registrados**. Construído em
+2026-08-27.
 
-- Cliente acumula em memória e **envia em lote** (a cada ~10 comandos ou ao sair)
-- Payload: `comando`, `timestamp`, `país` (header do Cloudflare)
+- Cliente acumula em memória e **envia em lote** (a cada 10 comandos, ao trocar de
+  aba e ao fechar — as duas últimas por `sendBeacon`)
+- Payload: **a primeira palavra** da linha, e se ela é um comando que existe
 - **Sem IP, sem cookie, sem identificador de sessão**
 - Gravação em JSONL simples. Sem banco.
 - Rate limit no nginx + limite de tamanho por requisição
 - Declarado abertamente em `cat /etc/privacy`
 
-**Retorno:** alimenta um comando `stats` público — comandos mais digitados, quantas
-pessoas rodaram `doom`, quais comandos inexistentes as pessoas mais tentaram. Conteúdo
-que se escreve sozinho e serve de rota indireta de descoberta dos easter eggs.
+**Três decisões que apertaram o que estava escrito aqui antes:**
+
+1. **A primeira palavra, não a linha.** `cd projects` vira `cd`. Os dois rankings
+   do `stats` só precisam disso, e o resto da linha é justamente onde alguém
+   poderia ter escrito algo sobre si mesmo num `echo`. O que não é gravado não
+   vaza.
+2. **O relógio é o do servidor, na chegada.** O relógio de uma máquina tem desvio
+   próprio e resolução de milissegundo, o que faz dele um identificador bom
+   demais para quem promete não identificar.
+3. **Nem identificador aleatório.** Duas linhas do mesmo visitante são
+   indistinguíveis de duas linhas de dois visitantes. É o que impede reconstruir
+   uma sessão a partir do arquivo — inclusive por quem tem o arquivo.
+
+**Onde mora:** `/var/lib/portfolio/commands.jsonl`, criado pelo `StateDirectory=`
+da unit. É o único lugar do disco onde a API pode escrever: o `ProtectSystem=strict`
+fecha o resto, e o `ReadOnlyPaths=/srv/portfolio` fecha até o próprio clone.
+
+**O agregado vive em memória.** O arquivo é lido uma vez na subida para
+reconstruí-lo; depois disso responder ao `stats` não custa I/O. Uma linha tem ~60
+bytes, então o arquivo é irrelevante em disco por anos — e se um dia não for, quem
+rotaciona é o logrotate, sem mudar código.
+
+**A chave do rate limit é o `CF-Connecting-IP`,** não o `remote_addr`: atrás do
+túnel toda requisição chega de 127.0.0.1 e o endereço real do socket não distingue
+ninguém. O contador vive na memória do nginx, não vai para disco, e o
+`/etc/privacy` diz isso.
+
+**Retorno:** alimenta o comando `stats` público — comandos mais digitados e quais
+comandos inexistentes as pessoas mais tentaram. Conteúdo que se escreve sozinho e
+serve de rota indireta de descoberta dos easter eggs.
 
 ---
 
@@ -456,8 +485,13 @@ Lista fechada: `cpuinfo`, `meminfo`, `uptime`, `loadavg`, `version`. É o que fa
 esses arquivos existem na árvore com **tamanho zero** — que é, por acaso,
 exatamente o que `ls -l` mostra num /proc de verdade.
 
-**`POST /api/log`** — recebe lotes de comandos. Único endpoint de escrita.
-Ainda não existe; é da fase 4.
+**`POST /api/log`** — recebe lotes de comandos. **Único endpoint de escrita do
+projeto**, e por isso o único com `limit_req` e limite de corpo (4k) no nginx. O
+corpo é validado por modelo estrito: campo a mais rejeita o lote inteiro, e nome
+que não é nome de comando é descartado em silêncio.
+
+**`GET /api/usage`** — o agregado que o comando `stats` mostra. Sai da memória,
+não do disco (ver 2.10).
 
 **Degradação:** o site é estático e não depende da API para existir. Quando ela
 não responde, cada comando de camada 3 responde `cannot reach the machine` e o
@@ -558,11 +592,13 @@ content/<lang>/           espelha a raiz do filesystem simulado (etc, home, var)
 art/banner*.txt           arte ASCII crua do boot; trocar = colar por cima
 public/fonts/             JetBrains Mono auto-hospedada (README.md explica)
 api/
-├── main.py               FastAPI: /api/stats, /api/proc/{name}, /api/health
+├── main.py               FastAPI: as cinco rotas
 ├── probe.py              leitura de /proc e /sys, sem dependência externa
+├── usage.py              o JSONL dos comandos e o agregado em memória
 └── fake.py               snapshot sintético, para desenvolver fora do Linux
 deploy/
 ├── nginx.conf            server na 8080: dist/ estático + proxy de /api
+├── nginx-limits.conf     a zona de rate limit; vai em conf.d/, não em sites-*
 └── portfolio-api.service unit do systemd para o uvicorn
 src/
 ├── main.ts               monta tudo e inicia a sessão
@@ -585,13 +621,15 @@ src/
 │   ├── text.ts           ferramentas de texto
 │   ├── doom.ts           o comando `doom`
 │   ├── font.ts           o comando `font`
+│   ├── stats.ts         o comando `stats`
 │   ├── flags.ts          parsing de flags curtas, compartilhado
 │   └── system.ts         camada 3: uname, uptime, free, df, ps, neofetch, top
 ├── system/
 │   ├── stats.ts          cliente do /api/stats, com cache e SystemOffline
 │   ├── proc.ts           /proc do filesystem simulado, lido da máquina real
 │   ├── format.ts         tamanhos, tempos e tabelas no formato do coreutils
-│   └── top.ts            o laço de repintura do `top`
+│   ├── top.ts            o laço de repintura do `top`
+│   └── telemetry.ts      o lote de comandos e o agregado público
 ├── doom/
 │   ├── runtime.ts        carrega o wasm, roda o laço, desenha no terminal
 │   └── keymap.ts         teclado do navegador → códigos do DOOM
@@ -697,12 +735,12 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 - [ ] Conteúdo em português + comando `lang`
 - [x] Suporte a toque: barra de chips, fonte menor, `neofetch` sem arte em tela
       estreita — concluído em 2026-08-27
-- [ ] Logging + comando `stats`
+- [x] Telemetria + comando `stats` — concluído em 2026-08-27, com `/etc/privacy`
 - [ ] Easter eggs escolhidos + `crt`/efeitos
 - [x] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`) — concluído em
       2026-08-27, do release oficial e não do Google Fonts (ver 2.2)
-- [x] Deploy: nginx na 8080 e unit do systemd escritos em `deploy/` — falta
-      instalar no Pi e escrever o `deploy-portfolio`
+- [x] Deploy: instalado no Pi, com o `deploy-portfolio` versionado — concluído em
+      2026-08-27
 
 ### Critério de publicação
 

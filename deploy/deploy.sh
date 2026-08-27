@@ -73,8 +73,12 @@ main() {
     sudo -n install -m 755 deploy/deploy-portfolio /usr/local/bin/deploy-portfolio
   fi
 
-  if changed deploy/nginx.conf; then
+  # Os dois arquivos do nginx vão juntos mesmo quando só um mudou: o site usa a
+  # zona de limite declarada no outro, e instalar um sem o outro deixa uma
+  # configuração que não passa no `nginx -t` — com o nginx já recarregando.
+  if changed deploy/nginx.conf deploy/nginx-limits.conf; then
     echo "[deploy] nginx mudou, reinstalando..."
+    sudo -n cp deploy/nginx-limits.conf /etc/nginx/conf.d/portfolio-limits.conf
     sudo -n cp deploy/nginx.conf /etc/nginx/sites-available/portfolio
     sudo -n nginx -t
     sudo -n systemctl reload nginx

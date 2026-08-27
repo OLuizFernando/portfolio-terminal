@@ -11,6 +11,8 @@ import type { DirNode, Manifest } from '../src/fs/types';
 import { Vfs } from '../src/fs/vfs';
 import { DEFAULT_FONT_SIZE, Env, TOUCH_FONT_SIZE } from '../src/shell/env';
 import { CHIPS } from '../src/terminal/mobile';
+import { Telemetry, firstWord } from '../src/system/telemetry';
+import { report } from '../src/commands/stats';
 import { neofetchBlock } from '../src/commands/system';
 import { SystemClient } from '../src/system/stats';
 import { execute } from '../src/shell/executor';
@@ -269,6 +271,84 @@ count++;
     console.error('FAIL  tela minuscula troca a arte por texto');
   } else console.log('ok    tela minuscula troca a arte por texto');
 }
+
+// --- Telemetria -----------------------------------------------------------
+
+count++;
+if (firstWord('  cd projects/foo  ') !== 'cd' || firstWord('') !== '' || firstWord('ls') !== 'ls') {
+  failures++;
+  console.error('FAIL  firstWord pega a primeira palavra');
+} else console.log('ok    firstWord pega a primeira palavra');
+
+// O lote não pode carregar nada além do que o /etc/privacy promete.
+{
+  const enviados: unknown[] = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = (async (_url: string, init: { body: string }) => {
+    enviados.push(JSON.parse(init.body));
+    return { ok: true, json: async () => ({}) } as Response;
+  }) as unknown as typeof fetch;
+
+  const telemetry = new Telemetry();
+  for (let i = 0; i < 9; i++) telemetry.record('cd projects', true);
+  const antes = enviados.length;
+  telemetry.record('vimm arquivo.txt', false);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  globalThis.fetch = original;
+
+  count++;
+  const lote = enviados[0] as { commands: { cmd: string; ok: boolean }[] } | undefined;
+  const campos = new Set(lote?.commands.flatMap((item) => Object.keys(item)) ?? []);
+  const soPrimeiraPalavra = lote?.commands.every((item) => !item.cmd.includes(' ')) ?? false;
+  if (
+    antes !== 0 ||
+    enviados.length !== 1 ||
+    lote?.commands.length !== 10 ||
+    !soPrimeiraPalavra ||
+    campos.size !== 2 ||
+    !campos.has('cmd') ||
+    !campos.has('ok') ||
+    lote.commands[9]?.ok !== false
+  ) {
+    failures++;
+    console.error(`FAIL  telemetria manda lote de 10 com cmd e ok, e nada mais: ${JSON.stringify(enviados)}`);
+  } else console.log('ok    telemetria manda lote de 10 com cmd e ok, e nada mais');
+}
+
+await check('stats', has('cannot reach the machine'), 'stats sem API');
+
+// O relatório é puro: dá para conferir sem servidor nenhum.
+count++;
+const relatorio = report(
+  {
+    total: 1234,
+    since: '2026-08-27T19:47:40Z',
+    countries: 7,
+    top: [['ls', 400], ['cat', 200]],
+    missing: [['vim', 9]],
+  },
+  80,
+  true,
+).join('\n');
+const vazio = report({ total: 0, since: null, countries: 0, top: [], missing: [] }, 80, true).join('\n');
+if (
+  !relatorio.includes('1,234 commands') ||
+  !relatorio.includes('27 Aug 2026') ||
+  !relatorio.includes('7 countries') ||
+  !relatorio.includes('█') ||
+  !relatorio.includes('vim') ||
+  !vazio.includes('You are early')
+) {
+  failures++;
+  console.error(`FAIL  stats monta o relatório\n${relatorio}`);
+} else console.log('ok    stats monta o relatório');
+
+// Sem espaço para barra, o ranking continua legível.
+count++;
+if (report({ total: 9, since: null, countries: 0, top: [['ls', 9]], missing: [] }, 20, true).some((l) => l.length > 20)) {
+  failures++;
+  console.error('FAIL  ranking cabe em tela estreita');
+} else console.log('ok    ranking cabe em tela estreita');
 
 // --- Mobile ---------------------------------------------------------------
 //

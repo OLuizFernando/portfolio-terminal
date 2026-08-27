@@ -107,3 +107,32 @@ export function table(rows: string[][], align: boolean[], gap = 1): string[] {
       .trimEnd(),
   );
 }
+
+/**
+ * Quebra o texto na largura dada, respeitando palavra.
+ *
+ * Palavra que sozinha não cabe é cortada: numa tela de 40 colunas, um caminho
+ * longo tem que aparecer inteiro em duas linhas, não sumir na margem.
+ */
+export function wrap(text: string, width: number): string[] {
+  const lines: string[] = [];
+
+  for (const paragraph of text.split('\n')) {
+    let line = '';
+    for (const word of paragraph.split(/\s+/).filter((piece) => piece !== '')) {
+      if (line === '') line = word;
+      else if (line.length + 1 + word.length <= width) line += ' ' + word;
+      else {
+        lines.push(line);
+        line = word;
+      }
+      while (line.length > width) {
+        lines.push(line.slice(0, width));
+        line = line.slice(width);
+      }
+    }
+    lines.push(line);
+  }
+
+  return lines;
+}

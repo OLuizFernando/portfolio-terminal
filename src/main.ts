@@ -15,6 +15,7 @@ import { createTerminal } from './terminal/terminal';
 import { loadHistory, loadPrefs, saveHistory, savePrefs } from './storage';
 import { mountProc } from './system/proc';
 import { SystemClient } from './system/stats';
+import { firstWord, Telemetry } from './system/telemetry';
 
 const manifest = rawManifest as unknown as Manifest;
 
@@ -48,6 +49,7 @@ function main(): void {
   mountProc(vfs);
 
   const system = new SystemClient();
+  const telemetry = new Telemetry();
 
   let alive = true;
 
@@ -64,6 +66,7 @@ function main(): void {
     setFontSize: (size) => handle.setFontSize(size),
     exit: () => {
       alive = false;
+      telemetry.stop();
       editor.dispose();
       handle.print('\nlogout\nConnection to oluizfernando closed.\n');
     },
@@ -94,6 +97,7 @@ function main(): void {
     },
     submit: async (line) => {
       if (line.trim() === '') return;
+      telemetry.record(line, registry.has(firstWord(line)));
       const { output } = await execute(line, ctx);
       if (output) handle.print(output);
     },
@@ -121,6 +125,14 @@ function main(): void {
   if (import.meta.env.DEV) {
     (window as unknown as Record<string, unknown>).__term = handle.term;
   }
+
+  // A aba indo embora é a última chance de mandar o lote pendente. O
+  // `pagehide` cobre o fechamento; o `hidden` cobre trocar de aba no celular,
+  // que muitas vezes é o fim da visita sem nunca disparar um `pagehide`.
+  window.addEventListener('pagehide', () => telemetry.close());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') telemetry.close();
+  });
 
   handle.term.focus();
 

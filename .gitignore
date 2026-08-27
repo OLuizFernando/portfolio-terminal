@@ -9,3 +9,6 @@ src/generated/
 # recompilar. Os artefatos prontos ficam versionados em public/doom/.
 vendor/
 wasm/build/
+
+# Telemetria em desenvolvimento. Em produção mora no StateDirectory do systemd.
+var/

@@ -95,8 +95,6 @@ arquivos que ele deixou lá.
 ├── README.txt          ponto de entrada: quem é + o que explorar
 ├── about.txt           versão longa, voz própria
 ├── contact.txt         email, GitHub, LinkedIn
-├── resume.txt          currículo em texto
-├── now.txt             no que está trabalhando/estudando agora
 ├── skills.txt
 ├── experience/
 │   ├── veeva.txt

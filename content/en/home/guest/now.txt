@@ -1,5 +1,0 @@
-[draft — real content lands in phase 3]
-
-What I am working on right now:
-
-  - this terminal

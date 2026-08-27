@@ -1,6 +1,15 @@
-[draft — real content lands in phase 3]
+Veeva Systems Inc.
+https://www.veeva.com
 
-Veeva Systems
-<role> — <start> to <end>
+Associate Software Engineer
+Jul 2026 - Present
 
-  - ...
+  - I work on local solutions as part of the Latin America development team, where I’m getting hands-on experience understanding real market needs and developing new products.
+
+  - I am learning quickly while developing APIs with FastAPI and Flask, building responsive web front ends with React, Vue.js and Tailwind CSS, writing automated tests with Pytest and Jest.js, and containerizing services using Docker and Docker Compose.
+
+Software Engineer Intern
+Nov 2025 - Jun 2026
+
+Data Steward Intern
+Jul 2025 - Oct 2025

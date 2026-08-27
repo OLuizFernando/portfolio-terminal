@@ -1,6 +1,8 @@
-[draft — real content lands in phase 3]
-
-languages     TypeScript, JavaScript, Python
-frontend      ...
-backend       ...
-infra         Raspberry Pi, nginx, Cloudflare Tunnel, systemd
+Programming Languages:    Python, JavaScript, Java, C
+Web Development:          FastAPI, Flask, React, Next.js, Vite, Node.js
+Styling:                  Tailwind CSS, Shadcn/UI, Bootstrap
+Database:                 PostgreSQL, MySQL, MongoDB, SQLite
+Testing:                  Jest, Postman, Insomnia, Vitest, Pytest
+DevOps & Infra:           Git, GitHub, GitHub Actions, Docker, Cloudflare, Vercel, AWS
+Data Science & ML:        Pandas, Scikit-learn, Matplotlib, NumPy
+Operating Systems:        MacOS, Windows, Linux (Arch, Mint, Ubuntu, Raspbian)

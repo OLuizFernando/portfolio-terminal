@@ -23,6 +23,8 @@ export class Env {
   fontSize = DEFAULT_FONT_SIZE;
   /** O padrão desta tela, para onde o `font reset` volta. Depende do aparelho. */
   defaultFontSize = DEFAULT_FONT_SIZE;
+  /** Scanlines e brilho de fósforo. Preferência, como o tamanho da fonte. */
+  crt = false;
   history: string[] = [];
 
   get shortCwd(): string {

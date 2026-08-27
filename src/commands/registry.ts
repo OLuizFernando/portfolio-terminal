@@ -1,6 +1,7 @@
 import type { Vfs } from '../fs/vfs';
 import { doomCommands } from './doom';
 import { fontCommands } from './font';
+import { funCommands } from './fun';
 import { navCommands } from './nav';
 import { statsCommands } from './stats';
 import { systemCommands } from './system';
@@ -16,6 +17,7 @@ export function buildRegistry(extra: CommandSpec[] = []): CommandRegistry {
     ...statsCommands,
     ...doomCommands,
     ...fontCommands,
+    ...funCommands,
     ...extra,
   ];
   for (const spec of all) registry.set(spec.name, spec);

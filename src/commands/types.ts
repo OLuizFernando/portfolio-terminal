@@ -21,6 +21,8 @@ export interface TerminalControl {
   cellAspect(): number;
   /** Troca o tamanho da fonte. Devolve como voltar ao que era. */
   setFontSize(size: number): () => void;
+  /** Liga ou desliga o efeito de tubo. Só mexe em CSS. */
+  setCrt(on: boolean): void;
   readonly cols: number;
   readonly rows: number;
 }

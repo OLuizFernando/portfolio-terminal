@@ -13,7 +13,7 @@ código no mesmo commit.
 ```
 npm run dev       vite, com o manifesto regenerado antes
 npm run build     tsc --noEmit && vite build → dist/
-npm test          90 smoke tests headless (esbuild + node, sem navegador)
+npm test          111 smoke tests headless (esbuild + node, sem navegador)
 npm run fs        regenera src/generated/manifest.json
 ```
 
@@ -130,8 +130,9 @@ Os `.txt` em `content/<lang>/` espelham a raiz do filesystem simulado. O mtime q
 `ls -l` mostra é a data do último commit git que tocou o arquivo — arquivo não
 commitado cai no mtime do disco.
 
-O `/etc/privacy` é conteúdo lido por gente e por comando ao mesmo tempo: ele
-declara a telemetria, e tem que continuar batendo com o que o código manda.
+Dois arquivos de conteúdo são lidos por comando, não só pelo `cat`:
+`/usr/share/fortunes` (o `fortune` sorteia um parágrafo, separados por `%` numa
+linha só, que é o formato de verdade) e `/etc/privacy`, que declara a telemetria.
 
 A JetBrains Mono em `public/fonts/` também é colada, não gerada — o `README.md` de
 lá diz de onde ela vem e por que não é a do Google Fonts.

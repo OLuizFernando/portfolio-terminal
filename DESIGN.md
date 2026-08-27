@@ -141,10 +141,18 @@ acessibilidade básica.
 **Camada 3 — sistema (dados reais do Pi):**
 `whoami`, `uname -a`, `uptime`, `date`, `neofetch`, `free`, `df`, `ps`, `top`
 
-**Camada 4 — personalidade (escolher 4-5, não todos):**
-`doom`, `cowsay`, `fortune`, `matrix`, `sl`, `sudo` (só piada — "Este incidente será
-reportado."), `rm -rf /` (finge apagar tudo e restaura), `vim` (não deixa sair sem
-`:q`), `curl <url>`, `crt` / efeitos, `lang`, `stats`
+**Camada 4 — personalidade (escolhida em 2026-08-27):**
+`doom`, `sudo`, `rm -rf /`, `cowsay`, `fortune`, `matrix`, `crt`, `stats` — e
+`lang`, que ainda depende do conteúdo em português.
+
+Ficaram de fora, e por quê:
+
+- `sl` — a locomotiva é boa, mas custa animação e não guarda nada. O `matrix` já
+  ocupa a vaga de "olha o que o terminal faz" sem ser um segundo desenho animado.
+- `vim` (não deixar sair sem `:q`) — a piada é prender o visitante. Num celular,
+  onde não existe `:` fácil, prender é só prender.
+- `curl <url>` — buscar URL arbitrária do lado do servidor é um proxy aberto com
+  outro nome. A única piada que custava superfície de ataque.
 
 **Regras de comportamento:**
 
@@ -621,6 +629,7 @@ src/
 │   ├── text.ts           ferramentas de texto
 │   ├── doom.ts           o comando `doom`
 │   ├── font.ts           o comando `font`
+│   ├── fun.ts           camada 4: sudo, rm, fortune, cowsay, matrix, crt
 │   ├── stats.ts         o comando `stats`
 │   ├── flags.ts          parsing de flags curtas, compartilhado
 │   └── system.ts         camada 3: uname, uptime, free, df, ps, neofetch, top
@@ -638,6 +647,7 @@ src/
     ├── boot.ts           a sequência de boot, pulável
     ├── lineEditor.ts     edição de linha, histórico, atalhos
     ├── mobile.ts         barra de chips e o terminal acima do teclado
+    ├── matrix.ts         a chuva digital
     └── completion.ts     Tab-completion de comando e caminho
 wasm/
 ├── doomgeneric_wasm.c    backend ASCII do doomgeneric
@@ -736,7 +746,8 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 - [x] Suporte a toque: barra de chips, fonte menor, `neofetch` sem arte em tela
       estreita — concluído em 2026-08-27
 - [x] Telemetria + comando `stats` — concluído em 2026-08-27, com `/etc/privacy`
-- [ ] Easter eggs escolhidos + `crt`/efeitos
+- [x] Easter eggs: `sudo`, `rm -rf /`, `cowsay`, `fortune`, `matrix`, `crt` —
+      concluído em 2026-08-27
 - [x] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`) — concluído em
       2026-08-27, do release oficial e não do Google Fonts (ver 2.2)
 - [x] Deploy: instalado no Pi, com o `deploy-portfolio` versionado — concluído em
@@ -755,6 +766,8 @@ Não há lançamento parcial.
   `resume.txt`, `experience/veeva.txt` e `projects/` estão marcados
   `[draft — real content lands in phase 3]` e só o Luiz tem essa informação
 - Definir quais projetos reais entram em `projects/`
-- Escolher os 4-5 easter eggs da camada 4 (a graça está na densidade, não na
-  quantidade — cada easter egg mal-acabado enfraquece os bons)
+- Escrever o conteúdo em português e ligar o comando `lang` — é o último item
+  aberto da fase 4, e depende do conteúdo em inglês existir primeiro
+- As frases do `fortune` são um chute inicial em `content/en/usr/share/fortunes`:
+  trocar por frases que o Luiz de fato queira citar
 - Decidir se o DOOM tem som (hoje é compilado sem)

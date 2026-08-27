@@ -11,9 +11,10 @@ const PREFS_KEY = 'portfolio.prefs';
 export interface Prefs {
   lang: string;
   fontSize: number;
+  crt: boolean;
 }
 
-const DEFAULT_PREFS: Prefs = { lang: 'en', fontSize: DEFAULT_FONT_SIZE };
+const DEFAULT_PREFS: Prefs = { lang: 'en', fontSize: DEFAULT_FONT_SIZE, crt: false };
 
 function read<T>(key: string, fallback: T): T {
   try {

@@ -37,6 +37,7 @@ function main(): void {
   const prefs = loadPrefs(env.defaultFontSize);
   env.lang = prefs.lang;
   env.fontSize = prefs.fontSize;
+  env.crt = prefs.crt;
   env.history = loadHistory();
 
   // O terminal nasce em DEFAULT_FONT_SIZE; só se ajusta se a visita anterior
@@ -51,6 +52,11 @@ function main(): void {
   const system = new SystemClient();
   const telemetry = new Telemetry();
 
+  // O efeito é uma classe no <body>: o canvas do xterm não responde a
+  // text-shadow, então quem desenha scanline e vinheta é o CSS por cima dele.
+  const setCrt = (on: boolean) => document.body.classList.toggle('crt', on);
+  setCrt(env.crt);
+
   let alive = true;
 
   const syncBashHistory = () => {
@@ -64,6 +70,7 @@ function main(): void {
     writeBytes: (data, done) => handle.term.write(data, done),
     cellAspect: () => handle.cellAspect(),
     setFontSize: (size) => handle.setFontSize(size),
+    setCrt,
     exit: () => {
       alive = false;
       telemetry.stop();
@@ -84,7 +91,7 @@ function main(): void {
     term,
     registry,
     system,
-    savePrefs: () => savePrefs({ lang: env.lang, fontSize: env.fontSize }),
+    savePrefs: () => savePrefs({ lang: env.lang, fontSize: env.fontSize, crt: env.crt }),
   };
 
   const editor = new LineEditor(handle.term, {

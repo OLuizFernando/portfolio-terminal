@@ -101,3 +101,41 @@ body.touch #terminal {
   color: var(--bg);
 }
 
+/*
+ * O efeito de tubo do comando `crt`.
+ *
+ * Tudo por cima, nada dentro: o xterm desenha num canvas WebGL, que não responde
+ * a `text-shadow` nem a nada que se aplique a texto. O que dá para fazer é
+ * filtrar o canvas inteiro e desenhar as scanlines e a vinheta em cima.
+ */
+body.crt #terminal {
+  /* O blur sub-pixel é o brilho de fósforo: sem ele o texto fica nítido demais
+     para um tubo, e nítido demais é o que o efeito existe para desfazer. */
+  filter: contrast(1.25) brightness(1.12) blur(0.4px);
+}
+
+body.crt::before,
+body.crt::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Scanlines: uma linha escura a cada três, que é o passo que ainda lê como
+   varredura e não como listra. */
+body.crt::after {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.45) 0,
+    rgba(0, 0, 0, 0.45) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Os cantos escuros de um tubo curvo. */
+body.crt::before {
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.7) 100%);
+}

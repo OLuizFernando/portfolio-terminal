@@ -31,7 +31,7 @@ mountProc(vfs);
 const env = new Env();
 
 /** Registra o que o comando pediu ao terminal, para os testes conferirem. */
-const terminal = { fontSize: env.fontSize, prefsSalvas: 0 };
+const terminal = { fontSize: env.fontSize, prefsSalvas: 0, crt: false };
 
 // Sem servidor no teste headless: o fetch falha e o cliente vira SystemOffline,
 // que é exatamente o cenário de "API fora do ar" que os comandos precisam tratar.
@@ -56,6 +56,9 @@ const ctx: ShellContext = {
       return () => {
         terminal.fontSize = env.fontSize;
       };
+    },
+    setCrt: (on) => {
+      terminal.crt = on;
     },
     cols: 80,
     rows: 24,
@@ -271,6 +274,48 @@ count++;
     console.error('FAIL  tela minuscula troca a arte por texto');
   } else console.log('ok    tela minuscula troca a arte por texto');
 }
+
+// --- Camada 4: personalidade ----------------------------------------------
+
+await check('sudo rm -rf /', has('guest is not in the sudoers file'), 'sudo: incidente reportado');
+await check('sudo', has('usage: sudo'));
+
+// A recusa do `-rf /` é a do coreutils de verdade, e a flag que a destrava
+// também.
+await check('rm -rf /', has('dangerous to operate recursively', '--no-preserve-root'));
+await check('rm about.txt', has('Operation not permitted'));
+await check('rm', has('missing operand'));
+await check(
+  'rm -rf --no-preserve-root / | tail -n 3',
+  has('Just kidding'),
+  'rm --no-preserve-root: apaga tudo e devolve tudo',
+);
+
+await check('fortune', (o) => o.trim().length > 10);
+await check('fortune | wc -l', (o) => Number(o.trim()) >= 1, 'fortune | wc -l');
+await check('cowsay hello', has('< hello >', '(oo)'));
+await check('cowsay', has('usage: cowsay'));
+await check('fortune | cowsay', has('(oo)', '||----w |'), 'fortune | cowsay');
+await check('echo um | cowsay', has('< um >'));
+await check('matrix | cat', has('watched, not piped'));
+
+// O balão quebra em 40 colunas, e a moldura acompanha o texto.
+count++;
+const longo = (await execute('cowsay ' + 'palavra '.repeat(20), ctx)).output.split('\n');
+if (!longo.every((line) => line.length <= 48) || !longo.some((line) => line.startsWith('/'))) {
+  failures++;
+  console.error('FAIL  cowsay quebra em 40 colunas');
+} else console.log('ok    cowsay quebra em 40 colunas');
+
+await check('crt', (o) => o === 'crt: on\n' && env.crt === true && terminal.crt === true);
+await check('crt on', (o) => o === 'crt: on\n', 'crt on: idempotente');
+await check('crt off', (o) => o === 'crt: off\n' && env.crt === false && terminal.crt === false);
+await check('crt maybe', has('usage: crt'));
+
+// O `rm` é reação, não comando: fica fora de toda listagem, como o ~/.secret.
+await check('help --all', has('sudo', 'cowsay', 'fortune', 'matrix', 'crt', 'stats'));
+await check('help --all', lacks(' rm '), 'help --all esconde o rm');
+await check('ls /usr/bin', lacks('rm'), '/usr/bin esconde o rm');
 
 // --- Telemetria -----------------------------------------------------------
 

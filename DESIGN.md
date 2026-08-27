@@ -34,14 +34,14 @@ máquina — está olhando pra dentro dela.
 
 ### 2.1 Shell
 
-| Decisão | Escolha |
-|---|---|
-| Profundidade da simulação | Filesystem simulado real (não é menu disfarçado) |
-| Pipes e redirecionamentos | **Sim** — `\|`, `>`, `>>` |
-| Encadeamento | `&&`, `\|\|`, `;` |
-| Shell real em container | **Não** — risco de segurança não justificado |
-| Tab-completion | Comandos **e** caminhos; Tab duplo lista ambiguidades |
-| Atalhos | `Ctrl+C` cancela a linha, `Ctrl+L` limpa a tela, ↑/↓ navegam histórico |
+| Decisão                   | Escolha                                                                |
+| ------------------------- | ---------------------------------------------------------------------- |
+| Profundidade da simulação | Filesystem simulado real (não é menu disfarçado)                       |
+| Pipes e redirecionamentos | **Sim** — `\|`, `>`, `>>`                                              |
+| Encadeamento              | `&&`, `\|\|`, `;`                                                      |
+| Shell real em container   | **Não** — risco de segurança não justificado                           |
+| Tab-completion            | Comandos **e** caminhos; Tab duplo lista ambiguidades                  |
+| Atalhos                   | `Ctrl+C` cancela a linha, `Ctrl+L` limpa a tela, ↑/↓ navegam histórico |
 
 O parser precisa dar conta de: tokenização, aspas simples e duplas, globs (`*`),
 pipes e redirecionamentos.
@@ -57,13 +57,13 @@ de contar colunas, como no `ls` de verdade.
 
 ### 2.2 Estética
 
-| Decisão | Escolha |
-|---|---|
-| Paleta | **Branco puro sobre preto.** Sem cores. |
-| Destaques | **Negrito**, e só |
-| Fonte | JetBrains Mono |
+| Decisão                        | Escolha                                         |
+| ------------------------------ | ----------------------------------------------- |
+| Paleta                         | **Branco puro sobre preto.** Sem cores.         |
+| Destaques                      | **Negrito**, e só                               |
+| Fonte                          | JetBrains Mono                                  |
 | Efeitos (CRT, scanlines, glow) | **Desligados por padrão**, ligáveis por comando |
-| Boot | Streaming linha a linha |
+| Boot                           | Streaming linha a linha                         |
 
 **Nota sobre a fonte:** a JetBrains Mono é aberta (OFL) e está no Google Fonts, mas
 deve ser **auto-hospedada** — o Pi já serve os estáticos e o Cloudflare cacheia na
@@ -161,9 +161,9 @@ Ficaram de fora, e por quê:
 - `help` mostra 6-8 comandos principais + aponta para `help --all`.
 - `help --all` lista **todos os comandos funcionais**, incluindo `doom` e `neofetch`.
 - Ficam fora de qualquer listagem apenas: conteúdo escondido no filesystem
-  (`~/.secret`) e reações a comandos destrutivos (`rm -rf /`). Regra prática: *se é
+  (`~/.secret`) e reações a comandos destrutivos (`rm -rf /`). Regra prática: _se é
   um comando, está no `help --all`; se é conteúdo escondido ou reação, não está em
-  lugar nenhum.*
+  lugar nenhum._
 
 ### 2.5 Boot
 
@@ -268,16 +268,16 @@ foi descartado.**
 
 Medido em jogo (não na tela de título), grade 160x60, Chrome no Mac:
 
-| | ms por frame |
-|---|---|
+|                                     | ms por frame                                      |
+| ----------------------------------- | ------------------------------------------------- |
 | tick do DOOM + conversão para ASCII | **1,4** (p50) · 1,6 (p95) · 2,0 (p99) · 3,0 (máx) |
-| montagem da string do frame | 0,03 |
-| **orçamento a 35 fps** | **28,57** |
+| montagem da string do frame         | 0,03                                              |
+| **orçamento a 35 fps**              | **28,57**                                         |
 
 Sobra folga de mais de 20x. O gargalo que eu esperava — converter 64.000 pixels
 por frame — não existe: é ruído dentro do custo do próprio renderizador do DOOM.
 
-**A armadilha que quase matou o spike.** O `TryRunTics` do DOOM faz *busy-wait*
+**A armadilha que quase matou o spike.** O `TryRunTics` do DOOM faz _busy-wait_
 até a virada do tic. Chamar o tick a 60Hz (o ritmo do `requestAnimationFrame`)
 enquanto o jogo roda a 35Hz fazia metade das chamadas girar em falso, queimando
 até 28ms da thread principal sem produzir nada — p95 de 27,5ms, ou seja, o
@@ -290,7 +290,7 @@ para 0,2ms.
 lendo e montando a geometria, não tem a ver com o terminal. Aceito: acontece uma
 vez por nível.
 
-**Ainda não medido:** o custo de *parse* e desenho do xterm.js para os ~10KB de
+**Ainda não medido:** o custo de _parse_ e desenho do xterm.js para os ~10KB de
 frame a 35Hz (~350KB/s). Não deu para medir em aba automatizada, porque o
 navegador estrangula o `requestAnimationFrame` de aba oculta. O HUD do
 `doom --fps` mostra o número real numa janela de verdade.
@@ -358,11 +358,11 @@ shell volta ao tamanho que o visitante tinha escolhido, não ao padrão.
 
 Números na tela do Luiz (viewport ~1530px):
 
-| | grade do DOOM | células |
-|---|---|---|
-| `doom` (14px) | 142x45 | 6.390 |
-| `doom --font=8` | 286x86 | 24.596 |
-| `doom --font=6` | 384x108 | 41.472 (no teto) |
+|                 | grade do DOOM | células          |
+| --------------- | ------------- | ---------------- |
+| `doom` (14px)   | 142x45        | 6.390            |
+| `doom --font=8` | 286x86        | 24.596           |
+| `doom --font=6` | 384x108       | 41.472 (no teto) |
 
 **A proporção da célula agora é medida, não constante.** O valor fixo de 8:3 vinha
 de supor célula 1:2, e a imagem saía achatada: a medição real dá **0,421** a 14px
@@ -400,11 +400,11 @@ contra 28,57ms de orçamento.
 
 ### 2.9 Persistência
 
-| Item | Comportamento |
-|---|---|
-| Histórico de comandos | **Persiste** em `localStorage`, legível via `cat ~/.bash_history` |
-| Preferências (`lang`, `font`, `crt`, efeitos) | **Persistem** |
-| Diretório atual | **Reseta** para `~` a cada visita — o boot termina em casa |
+| Item                                          | Comportamento                                                     |
+| --------------------------------------------- | ----------------------------------------------------------------- |
+| Histórico de comandos                         | **Persiste** em `localStorage`, legível via `cat ~/.bash_history` |
+| Preferências (`lang`, `font`, `crt`, efeitos) | **Persistem**                                                     |
+| Diretório atual                               | **Reseta** para `~` a cada visita — o boot termina em casa        |
 
 ### 2.10 Telemetria
 

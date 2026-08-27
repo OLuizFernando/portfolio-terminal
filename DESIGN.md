@@ -96,6 +96,10 @@ arquivos que ele deixou lá.
 ├── about.txt           versão longa, voz própria
 ├── contact.txt         email, GitHub, LinkedIn
 ├── skills.txt
+├── education/
+│   ├── degree.txt      formação formal, com a instituição explicada em inglês
+│   ├── courses.txt     cursos e certificações, bloco por curso
+│   └── books.txt       livros lidos, título e autor em duas colunas
 ├── experience/
 │   ├── veeva.txt
 │   └── ...
@@ -132,6 +136,16 @@ Fora da home (easter eggs):
   visitante ler mais para saber o mesmo.
 - O `estudafatec` é repositório privado: o `links.txt` dele publica a URL de
   produção e diz que a fonte é fechada, em vez de apontar para um 404.
+- **Nome de arquivo diz a categoria, nunca a instituição.** `education/degree.txt`,
+  não `education/fatec.txt`: o site é em inglês, e quem lê o `ls` de fora do
+  Brasil não faz ideia do que é uma Fatec. O nome da instituição, por extenso e
+  com uma linha explicando o que ela é, mora na primeira linha de *dentro* do
+  arquivo, onde cabe. O `experience/veeva.txt` é a exceção que se justifica
+  sozinha: Veeva é global e o nome já diz do que se trata.
+- Em `courses.txt`, a URL é rotulada `Certificate:` ou `Course:` conforme o que
+  ela de fato abre. Vários cursos da Udemy não têm certificado público, e um
+  link de página de venda debaixo de um rótulo de certificado é uma promessa que
+  a URL não cumpre.
 
 ### 2.4 Comandos
 

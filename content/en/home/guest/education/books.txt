@@ -1,0 +1,5 @@
+System Design Interview          Alex Xu
+Cracking the Coding Interview    Gayle Laakmann McDowell
+Grokking Algorithms              Aditya Y. Bhargava
+The Lean Startup                 Eric Ries
+Steve Jobs                       Walter Isaacson

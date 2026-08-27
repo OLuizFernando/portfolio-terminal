@@ -1,0 +1,13 @@
+Faculdade de Tecnologia do Estado de São Paulo (Fatec)
+
+Systems Analysis and Development
+Jan 2024 - Dec 2026 (in progress)
+
+  Fatec is São Paulo's network of state-run technology colleges: public,
+  tuition-free, and entered by a competitive entrance exam.
+
+  A three-year undergraduate technology degree, aimed at building software
+  rather than at research.
+
+  The entrance exam is the one ~/projects/estudafatec was built for. I sat
+  it before I wrote the platform for it.

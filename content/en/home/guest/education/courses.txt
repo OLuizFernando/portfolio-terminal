@@ -1,0 +1,23 @@
+curso.dev
+Filipe Deschamps · 2026
+Certificate:  https://curso.dev/certificados/3a35d17f-a135-445e-8a83-e07fe712c4cf
+
+Machine Learning A-Z: AI & Python
+Udemy · 2025
+Course:  https://www.udemy.com/course/machinelearning
+
+Docker para Desenvolvedores (com Docker Swarm e Kubernetes)
+Udemy · 2025
+Course:  https://www.udemy.com/course/docker-para-desenvolvedores-com-docker-swarm-e-kubernetes
+
+CS50x: Introduction to Computer Science
+Harvard University · 2024
+Certificate:  https://cs50.harvard.edu/certificates/b630d640-6853-4521-a3f0-5d0e83e8d2fb
+
+100 Days of Code: The Complete Python Pro Bootcamp
+Udemy · 2023
+Course:  https://www.udemy.com/course/100-days-of-code
+
+Python 3 (Modules 1, 2 and 3)
+Curso em Vídeo · Gustavo Guanabara · 2020
+Course:  https://www.cursoemvideo.com/curso/python-3-mundo-1/

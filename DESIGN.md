@@ -418,8 +418,26 @@ Escrever conteúdo novo = criar um `.txt` e commitar.
 > arquivo** como timestamp do filesystem simulado. Assim `ls -l` mostra datas
 > verdadeiras.
 
-**Deploy:** manual. `ssh pi` → `git pull` → `npm run build`. Um `make deploy` resolve.
-Migrar para webhook do GitHub quando incomodar. Sem CI.
+**Deploy:** manual, e o build roda no Pi: `ssh pi deploy-portfolio`. O script mora em
+`/usr/local/bin/`, **fora do repositório** — o bash lê script em pedaços, e um
+`git pull` que troca o arquivo no meio da própria execução dá comportamento
+esquisito. Ele faz `git pull --ff-only`, reinstala dependências só quando o
+`package-lock.json` mudou (`npm ci` num Pi é minuto, não segundo) e builda.
+
+O clone no Pi é **completo, sem `--depth 1`**: num clone raso todo arquivo teria a
+mesma data de commit e o `ls -l` perderia a graça.
+
+**nginx:** um `server` na 8080, `root` no `dist/`, `try_files $uri $uri/
+/index.html`, cache imutável em `/assets/` e `/fonts/`, 30 dias em `/doom/` e
+`no-cache` no `index.html`. O `application/wasm` precisa estar no
+`/etc/nginx/mime.types` — sem ele o `instantiateStreaming` falha e o emscripten cai
+no caminho lento. O deploy não recarrega o nginx nem limpa cache de borda: o
+diretório é servido direto, e os nomes com hash do Vite dão URL nova a cada versão.
+
+> **Webhook do GitHub está fora**, e não por preguiça: ele precisaria alcançar o Pi
+> de fora, e a razão de existir do Cloudflare Tunnel é justamente não haver porta
+> aberta no roteador. Se o comando manual incomodar, o caminho é o Pi **perguntar** —
+> um systemd timer chamando o mesmo script — em vez de ser avisado. Sem CI.
 
 ### 3.5 Infraestrutura (já existente)
 
@@ -455,7 +473,8 @@ src/
 │   ├── format.ts         colunas e formato do `ls -l`
 │   ├── nav.ts            navegação
 │   ├── text.ts           ferramentas de texto
-│   └── doom.ts           o comando `doom`
+│   ├── doom.ts           o comando `doom`
+│   └── font.ts           o comando `font`
 ├── doom/
 │   ├── runtime.ts        carrega o wasm, roda o laço, desenha no terminal
 │   └── keymap.ts         teclado do navegador → códigos do DOOM

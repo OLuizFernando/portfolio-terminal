@@ -454,11 +454,28 @@ Escrever conteúdo novo = criar um `.txt` e commitar.
 > arquivo** como timestamp do filesystem simulado. Assim `ls -l` mostra datas
 > verdadeiras.
 
-**Deploy:** manual, e o build roda no Pi: `ssh pi deploy-portfolio`. O script mora em
-`/usr/local/bin/`, **fora do repositório** — o bash lê script em pedaços, e um
-`git pull` que troca o arquivo no meio da própria execução dá comportamento
-esquisito. Ele faz `git pull --ff-only`, reinstala dependências só quando o
-`package-lock.json` mudou (`npm ci` num Pi é minuto, não segundo) e builda.
+**Deploy:** manual, e o build roda no Pi: `ssh raspberrypi deploy-portfolio`.
+
+A lógica mora em **`deploy/deploy.sh`, versionada**, e o `/usr/local/bin/deploy-portfolio`
+é um wrapper de quinze linhas que faz o `git pull --ff-only` e então dá `exec` no
+script do repositório. A divisão existe porque o bash lê script em pedaços, e um
+pull que troca o arquivo no meio da própria execução dá comportamento esquisito —
+como o pull termina antes do `exec`, o bash só começa a ler o `deploy.sh` quando
+ele já está na versão final.
+
+> Ele já morou inteiro fora do repositório. Passou a valer versionar quando o
+> deploy deixou de ser "pull e build": com venv, dependências em duas linguagens e
+> serviço para reiniciar, um script solto no `/usr/local/bin` divergiria do que o
+> repositório precisa, sem ninguém perceber.
+
+Comparando o commit de antes com o de depois, ele decide o que fazer: recria o venv
+se o `api/requirements.txt` mudou (o pip instala o que falta mas nunca remove o que
+saiu da lista, e um venv que só cresce acaba cheio de coisa que ninguém importa),
+roda `npm ci` só se o `package-lock.json` mudou (num Pi isso é minuto, não segundo),
+builda sempre, reinicia a API se `api/` mudou, e reinstala a unit ou o nginx se os
+arquivos de `deploy/` mudaram. No fim confere o `/api/health` e **falha com código 1**
+se a resposta não for `{"ok":true,"linux":true}`: "o deploy passou" não é a mesma
+coisa que "o site funciona".
 
 O clone no Pi é **completo, sem `--depth 1`**: num clone raso todo arquivo teria a
 mesma data de commit e o `ls -l` perderia a graça.

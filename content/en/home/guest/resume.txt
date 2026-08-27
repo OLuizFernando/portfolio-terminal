@@ -1,0 +1,13 @@
+[draft — real content lands in phase 3]
+
+LUIZ FERNANDO
+Web Developer
+
+EXPERIENCE
+  see ~/experience/
+
+PROJECTS
+  see ~/projects/
+
+CONTACT
+  see ~/contact.txt

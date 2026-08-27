@@ -1,0 +1,9 @@
+[draft — real content lands in phase 3]
+
+Web developer. Brazilian.
+
+I build things I want to exist. This terminal is one of them: no framework,
+no UI, a hand-written shell parser and a filesystem that only pretends to be
+one. The machine underneath is real, though. Try `neofetch`.
+
+Longer version goes here.

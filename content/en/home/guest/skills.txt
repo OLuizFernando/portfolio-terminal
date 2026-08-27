@@ -1,0 +1,6 @@
+[draft — real content lands in phase 3]
+
+languages     TypeScript, JavaScript, Python
+frontend      ...
+backend       ...
+infra         Raspberry Pi, nginx, Cloudflare Tunnel, systemd

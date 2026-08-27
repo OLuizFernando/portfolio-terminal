@@ -1,0 +1,6 @@
+TypeScript
+Vite
+xterm.js (WebGL renderer)
+FastAPI
+nginx
+Cloudflare Tunnel

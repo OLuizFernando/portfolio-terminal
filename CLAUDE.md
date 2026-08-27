@@ -98,6 +98,10 @@ Cada uma destas já custou tempo. Não as reintroduza.
 15. **Aba automatizada estrangula timer e rAF.** Cronometrar boot ou repintura por
     screenshot dá número inflado — o `npm test` mede isso fora do navegador, e é
     nele que se deve confiar.
+16. **A JetBrains Mono do Google Fonts não tem bloco nem box-drawing.** Os subsets
+    dele (latin, latin-ext, cyrillic) não cobrem `█ ╗ ═`, que são o banner inteiro.
+    Os arquivos em `public/fonts/` vêm do release oficial por causa disso; ao
+    trocar de versão, confira no DOM que `█` avança o mesmo que `M`.
 
 ## Adicionar um comando
 
@@ -115,6 +119,9 @@ troca, que é o atrito que a pasta existe para evitar (`art/README.md`).
 Os `.txt` em `content/<lang>/` espelham a raiz do filesystem simulado. O mtime que o
 `ls -l` mostra é a data do último commit git que tocou o arquivo — arquivo não
 commitado cai no mtime do disco.
+
+A JetBrains Mono em `public/fonts/` também é colada, não gerada — o `README.md` de
+lá diz de onde ela vem e por que não é a do Google Fonts.
 
 ## Deploy
 

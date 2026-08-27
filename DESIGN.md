@@ -73,6 +73,14 @@ Bold**). Sem variante Nerd Font: o `neofetch` e o `tree` usam apenas ASCII e car
 de box-drawing, e o banner do boot acrescenta blocos (`█`, U+2588) — a JetBrains
 Mono cobre os três nativamente.
 
+**E é por isso que os arquivos vêm do release oficial, não do Google Fonts**
+(feito em 2026-08-27). O que o Google serve é subsetado por faixa Unicode — latin,
+latin-ext, cyrillic — e **nenhuma dessas faixas tem bloco nem box-drawing**. Com
+o subset, o navegador cai numa fonte de fallback no meio do banner, com outra
+largura de avanço, e a arte desmorona. Conferido medindo no DOM: `█`, `╗` e `═`
+avançam os mesmos 8,4px que o `M` a 14px. `public/fonts/README.md` explica como
+trocar de versão sem perder isso.
+
 ### 2.3 Estrutura do filesystem
 
 O conteúdo do portfólio mora todo em `~`, raso (máximo 2 níveis). O restante do
@@ -547,7 +555,8 @@ diretório é servido direto, e os nomes com hash do Vite dão URL nova a cada v
 ```
 scripts/build-fs.mjs      varre content/ e art/ → src/generated/
 content/<lang>/           espelha a raiz do filesystem simulado (etc, home, var)
-art/banner.txt            arte ASCII crua do boot; trocar = colar por cima
+art/banner*.txt           arte ASCII crua do boot; trocar = colar por cima
+public/fonts/             JetBrains Mono auto-hospedada (README.md explica)
 api/
 ├── main.py               FastAPI: /api/stats, /api/proc/{name}, /api/health
 ├── probe.py              leitura de /proc e /sys, sem dependência externa
@@ -690,7 +699,8 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
       estreita — concluído em 2026-08-27
 - [ ] Logging + comando `stats`
 - [ ] Easter eggs escolhidos + `crt`/efeitos
-- [ ] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`)
+- [x] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`) — concluído em
+      2026-08-27, do release oficial e não do Google Fonts (ver 2.2)
 - [x] Deploy: nginx na 8080 e unit do systemd escritos em `deploy/` — falta
       instalar no Pi e escrever o `deploy-portfolio`
 

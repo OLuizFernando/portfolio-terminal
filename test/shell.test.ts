@@ -108,7 +108,16 @@ await check("echo 'single | quoted'", (o) => o === 'single | quoted\n');
 
 await check('cat projects/*/stack.txt', has('xterm.js'), 'glob: cat projects/*/stack.txt');
 await check('cat projects/*/stack.txt | grep -i xterm', (o) => o === 'xterm.js (WebGL renderer)\n');
-await check('ls | wc -l', (o) => o.trim() === '8', 'ls | wc -l (conta arquivos, nao colunas)');
+// A contagem vem do proprio filesystem, nunca de um literal: o teste existe para
+// provar que o `ls` com saida em pipe emite uma entrada por linha em vez de
+// colunas, e um numero cravado aqui passa a falhar a cada .txt que entra ou sai
+// de content/ por um motivo que nao tem nada a ver com o que ele afere.
+const homeEntries = vfs.list('/home/guest').length;
+await check(
+  'ls | wc -l',
+  (o) => homeEntries > 1 && Number(o.trim()) === homeEntries,
+  'ls | wc -l (conta arquivos, nao colunas)',
+);
 await check('ls | grep projects', (o) => o === 'projects\n');
 await check('cat README.txt | head -n 2 | wc -l', (o) => o.trim() === '2');
 await check('echo b > /tmp/a.txt', (o) => o === '' && vfs.readFile('/tmp/a.txt') === 'b\n');

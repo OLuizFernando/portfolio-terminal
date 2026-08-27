@@ -87,3 +87,40 @@ const count = (node) =>
   node.kind === 'file' ? 1 : Object.values(node.children).reduce((n, c) => n + count(c), 0);
 const total = langs.reduce((n, l) => n + count(manifest.langs[l]), 0);
 console.log(`[build-fs] ${langs.length} idioma(s), ${total} arquivo(s) → src/generated/manifest.json`);
+
+/**
+ * Arte ASCII de art/*.txt → src/generated/art.json.
+ *
+ * O arquivo é cru de propósito. Guardar isso num .ts obrigaria a escapar barra
+ * invertida e crase a cada troca, que é exatamente o atrito que este diretório
+ * existe para evitar: cola a arte, salva, pronto.
+ */
+const artDir = path.join(root, 'art');
+const art = {};
+
+if (fs.existsSync(artDir)) {
+  for (const entry of fs.readdirSync(artDir).sort()) {
+    if (!entry.endsWith('.txt')) continue;
+
+    const lines = fs
+      .readFileSync(path.join(artDir, entry), 'utf8')
+      .split('\n')
+      // Espaço à direita é invisível sobre fundo preto, mas engorda o bundle e
+      // atrapalha a medida de largura.
+      .map((line) => line.replace(/\s+$/, ''));
+
+    // Linha em branco no começo e no fim é resíduo de copiar e colar; no meio é
+    // intencional, e fica.
+    while (lines.length > 0 && lines[0] === '') lines.shift();
+    while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+
+    art[path.basename(entry, '.txt')] = lines;
+  }
+}
+
+fs.writeFileSync(path.join(outDir, 'art.json'), JSON.stringify(art));
+
+const shapes = Object.entries(art)
+  .map(([name, lines]) => `${name} ${Math.max(0, ...lines.map((l) => [...l].length))}x${lines.length}`)
+  .join(', ');
+console.log(`[build-fs] arte: ${shapes || 'nenhuma'} → src/generated/art.json`);

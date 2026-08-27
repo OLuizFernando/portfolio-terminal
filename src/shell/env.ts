@@ -3,6 +3,11 @@ import { contract } from '../fs/path';
 export const HOME = '/home/guest';
 /** Tamanho de fonte padrão do terminal. O comando `font` muda em runtime. */
 export const DEFAULT_FONT_SIZE = 14;
+/**
+ * O padrão de quem chega pelo celular. A 14px uma tela de 390px cabe 43 colunas,
+ * e `df`, `free` e o cabeçalho do `top` são escritos para 50 e poucas.
+ */
+export const TOUCH_FONT_SIZE = 12;
 export const USER = 'guest';
 export const HOST = 'oluizfernando';
 
@@ -16,6 +21,8 @@ export class Env {
   readonly host = HOST;
   lang = 'en';
   fontSize = DEFAULT_FONT_SIZE;
+  /** O padrão desta tela, para onde o `font reset` volta. Depende do aparelho. */
+  defaultFontSize = DEFAULT_FONT_SIZE;
   history: string[] = [];
 
   get shortCwd(): string {

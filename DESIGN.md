@@ -201,10 +201,35 @@ parecer defeito.
 Suporte real, não recusa nem modo degradado:
 
 - Tocar na tela sobe o teclado do sistema
-- Barra de **chips** acima do teclado com comandos frequentes (`ls`, `cd ..`, `cat`,
-  `help`, Tab) para evitar digitação
-- Fonte redimensionada; `tree` e `neofetch` com layout compacto
+- Barra de **chips** acima do teclado, para evitar digitação
+- Fonte menor por padrão em tela de toque
 - **DOOM é desktop-only** (mensagem explicativa no mobile)
+
+**Os chips são sete:** `ls`, `cd ..`, `cat`, `Tab`, `↑`, `help`, `^C`. Os quatro
+comandos cobrem navegar e ler, que é o site inteiro. `Tab` e `↑` entraram porque
+economizam mais digitação do que qualquer comando — `cat` sozinho existe para ser
+completado com `Tab`, e `↑` repete o que já foi digitado. `^C` é a saída de uma
+linha começada por engano, que no vidro é fácil demais de acontecer.
+
+Sete é o limite: eles cabem exatos numa tela de 390px, e chip que só aparece
+rolando não economiza o toque que ele existe para economizar.
+
+O toque entra pelo `input()` do xterm, não direto no editor de linha: assim o
+chip percorre o mesmo caminho de uma tecla de verdade, inclusive o de pular o
+boot, que escuta os dados do terminal e não conhece o editor.
+
+**Tamanho da fonte:** 12px na tela de toque, 14px no resto. A 14px um celular de
+390px cabe 43 colunas; `df`, `free` e o cabeçalho do `top` são escritos para 50 e
+poucas. O `font reset` volta para o padrão do aparelho, não para o do projeto.
+
+**Layout compacto:** medido, não presumido. O `tree` do conteúdo real não passa
+de 30 colunas, então não ganhou modo compacto nenhum — seria código morto. O
+`neofetch` precisa de 55 (arte + texto) e por isso larga a framboesa quando não
+cabe: embrulhada ela não encolhe, só quebra no meio das palavras.
+
+**O teclado do sistema não empurra layout, ele cobre.** Quem sabe quanto sobrou é
+o `visualViewport`; o `innerHeight` segue relatando a tela inteira. A barra e o
+terminal se posicionam por essa diferença.
 
 ### 2.8 DOOM
 
@@ -565,6 +590,7 @@ src/
     ├── terminal.ts       xterm.js + WebGL + fit
     ├── boot.ts           a sequência de boot, pulável
     ├── lineEditor.ts     edição de linha, histórico, atalhos
+    ├── mobile.ts         barra de chips e o terminal acima do teclado
     └── completion.ts     Tab-completion de comando e caminho
 wasm/
 ├── doomgeneric_wasm.c    backend ASCII do doomgeneric
@@ -660,7 +686,8 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 ### Fase 4 — Polimento
 
 - [ ] Conteúdo em português + comando `lang`
-- [ ] Barra de chips do mobile
+- [x] Suporte a toque: barra de chips, fonte menor, `neofetch` sem arte em tela
+      estreita — concluído em 2026-08-27
 - [ ] Logging + comando `stats`
 - [ ] Easter eggs escolhidos + `crt`/efeitos
 - [ ] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`)

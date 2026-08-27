@@ -234,6 +234,36 @@ const RASPBERRY = [
   "       '~'       ",
 ];
 
+/** Espaço entre a arte e o texto. */
+const ART_GAP = 3;
+
+/** As duas primeiras linhas do bloco são o cabeçalho `user@host` e o traço. */
+const heading = (text: string, index: number) => (index < 2 ? `\x1b[1m${text}\x1b[0m` : text);
+
+/**
+ * Monta o bloco do neofetch, com a framboesa ao lado se ela couber.
+ *
+ * Numa tela de celular a arte não cabe, e insistir nela não deixa a saída
+ * bonita: deixa cada linha embrulhando no meio de uma palavra. Aí a informação
+ * fica, que é o que alguém veio ler, e o desenho sai.
+ */
+export function neofetchBlock(info: string[], cols: number): string[] {
+  const width = Math.max(...RASPBERRY.map((line) => line.length));
+  const text = Math.max(...info.map((line) => line.length));
+
+  if (width + ART_GAP + text > cols) return info.map(heading);
+
+  const height = Math.max(RASPBERRY.length, info.length);
+  const lines: string[] = [];
+
+  for (let index = 0; index < height; index++) {
+    const art = (RASPBERRY[index] ?? '').padEnd(width);
+    lines.push(`${art}${' '.repeat(ART_GAP)}${heading(info[index] ?? '', index)}`.trimEnd());
+  }
+
+  return lines;
+}
+
 const neofetch = needsMachine(
   {
     name: 'neofetch',
@@ -252,18 +282,7 @@ const neofetch = needsMachine(
     // devolver a linha, não arte com escapes no meio.
     if (piped) return ok(fromLines(info));
 
-    const width = Math.max(...RASPBERRY.map((line) => line.length));
-    const height = Math.max(RASPBERRY.length, info.length);
-    const lines: string[] = [];
-
-    for (let index = 0; index < height; index++) {
-      const art = (RASPBERRY[index] ?? '').padEnd(width);
-      const text = info[index] ?? '';
-      // As duas primeiras linhas do bloco são o cabeçalho `user@host` e o traço.
-      lines.push(`${art}   ${index < 2 ? `\x1b[1m${text}\x1b[0m` : text}`.trimEnd());
-    }
-
-    return ok(fromLines(lines));
+    return ok(fromLines(neofetchBlock(info, ctx.term.cols)));
   },
 );
 

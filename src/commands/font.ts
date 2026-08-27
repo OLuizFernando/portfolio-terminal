@@ -1,4 +1,3 @@
-import { DEFAULT_FONT_SIZE } from '../shell/env';
 import { fail, ok, type CommandSpec, type Invocation } from './types';
 
 /**
@@ -17,21 +16,23 @@ const font: CommandSpec = {
     'Changes how big the text is, and remembers it for next time.\n\n' +
     '  font            print the current size\n' +
     `  font <px>       set it, between ${MIN_SIZE} and ${MAX_SIZE}\n` +
-    `  font reset      back to ${DEFAULT_FONT_SIZE}\n\n` +
+    '  font reset      back to the default for this screen\n\n' +
     'The size is stored in this browser only. It does not follow you to another\n' +
     'machine, and it never reaches the server.\n\n' +
     'This is the size of the text you are reading. `doom` has its own --font,\n' +
     'which only applies while the game is running.',
   run({ argv, ctx }: Invocation) {
     const argument = argv[1];
+    // O padrão é do aparelho, não do projeto: telas de toque começam menores.
+    const fallback = ctx.env.defaultFontSize;
 
     if (argument === undefined) {
-      return ok(`${ctx.env.fontSize}px (default ${DEFAULT_FONT_SIZE}, ${MIN_SIZE}-${MAX_SIZE})\n`);
+      return ok(`${ctx.env.fontSize}px (default ${fallback}, ${MIN_SIZE}-${MAX_SIZE})\n`);
     }
 
     if (argv.length > 2) return fail(`usage: ${font.usage}\n`, 2);
 
-    const size = argument === 'reset' ? DEFAULT_FONT_SIZE : Number(argument);
+    const size = argument === 'reset' ? fallback : Number(argument);
 
     if (!Number.isInteger(size)) {
       return fail(`font: not a size: ${argument}\nusage: ${font.usage}\n`, 2);

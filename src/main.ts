@@ -5,11 +5,12 @@ import { buildRegistry, mountUsrBin } from './commands/registry';
 import type { ShellContext, TerminalControl } from './commands/types';
 import type { DirNode, Manifest } from './fs/types';
 import { Vfs } from './fs/vfs';
-import { DEFAULT_FONT_SIZE, Env } from './shell/env';
+import { DEFAULT_FONT_SIZE, Env, TOUCH_FONT_SIZE } from './shell/env';
 import { execute } from './shell/executor';
 import { complete } from './terminal/completion';
 import { LineEditor } from './terminal/lineEditor';
 import { runBoot } from './terminal/boot';
+import { isTouch, setupTouch } from './terminal/mobile';
 import { createTerminal } from './terminal/terminal';
 import { loadHistory, loadPrefs, saveHistory, savePrefs } from './storage';
 import { mountProc } from './system/proc';
@@ -29,13 +30,16 @@ function main(): void {
   if (!element) throw new Error('#terminal não existe');
 
   const handle = createTerminal(element);
-  const prefs = loadPrefs();
   const env = new Env();
+  env.defaultFontSize = isTouch() ? TOUCH_FONT_SIZE : DEFAULT_FONT_SIZE;
+
+  const prefs = loadPrefs(env.defaultFontSize);
   env.lang = prefs.lang;
   env.fontSize = prefs.fontSize;
   env.history = loadHistory();
 
-  // Preferência de fonte guardada de uma visita anterior.
+  // O terminal nasce em DEFAULT_FONT_SIZE; só se ajusta se a visita anterior
+  // pediu outro tamanho, ou se esta é uma tela de toque.
   if (env.fontSize !== DEFAULT_FONT_SIZE) handle.setFontSize(env.fontSize);
 
   const vfs = new Vfs(mount(env.lang));
@@ -101,6 +105,15 @@ function main(): void {
 
   handle.term.onData((data) => {
     if (alive && !booting) editor.handle(data);
+  });
+
+  // Os chips entram pelo `input` do xterm, não direto no editor: assim o toque
+  // percorre o mesmo caminho que uma tecla de verdade — inclusive o de pular o
+  // boot, que escuta os dados do terminal e não conhece o editor.
+  setupTouch({
+    frame: element,
+    send: (data) => handle.term.input(data, true),
+    focus: () => handle.term.focus(),
   });
 
   // Gancho de desenvolvimento: dá acesso ao terminal pelo console para medir

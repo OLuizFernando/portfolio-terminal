@@ -13,7 +13,7 @@ código no mesmo commit.
 ```
 npm run dev       vite, com o manifesto regenerado antes
 npm run build     tsc --noEmit && vite build → dist/
-npm test          78 smoke tests headless (esbuild + node, sem navegador)
+npm test          85 smoke tests headless (esbuild + node, sem navegador)
 npm run fs        regenera src/generated/manifest.json
 ```
 
@@ -85,7 +85,17 @@ Cada uma destas já custou tempo. Não as reintroduza.
 12. **Fora do Linux não existe `/proc`.** A API cai em `api/fake.py` e marca
     `synthetic: true`, que o terminal exibe. Nunca remova esse aviso: ele é o que
     impede alguém de tomar número inventado por leitura de máquina.
-13. **Aba automatizada estrangula timer e rAF.** Cronometrar boot ou repintura por
+13. **Chip da barra do mobile responde a `pointerdown`, não a `click`.** O clique só
+    chega depois de o navegador já ter tirado o foco do terminal, e foco perdido no
+    celular é o teclado do sistema fechando na cara de quem tocou. O `preventDefault`
+    no `pointerdown` é o que impede a troca de foco. O dado entra pelo `term.input()`,
+    não pelo `editor.handle()`: só assim o toque também pula o boot, que escuta os
+    dados do terminal e não conhece o editor.
+14. **O teclado do sistema cobre a tela, não empurra o layout.** O `innerHeight`
+    continua relatando a tela inteira; quem sabe quanto sobrou é o `visualViewport`
+    (`src/terminal/mobile.ts`). Posicionar a barra por `innerHeight` a esconde atrás
+    do teclado exatamente quando ela serve para alguma coisa.
+15. **Aba automatizada estrangula timer e rAF.** Cronometrar boot ou repintura por
     screenshot dá número inflado — o `npm test` mede isso fora do navegador, e é
     nele que se deve confiar.
 

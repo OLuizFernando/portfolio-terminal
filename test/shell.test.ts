@@ -9,7 +9,9 @@ import { mountProc } from '../src/system/proc';
 import type { ShellContext } from '../src/commands/types';
 import type { DirNode, Manifest } from '../src/fs/types';
 import { Vfs } from '../src/fs/vfs';
-import { Env } from '../src/shell/env';
+import { DEFAULT_FONT_SIZE, Env, TOUCH_FONT_SIZE } from '../src/shell/env';
+import { CHIPS } from '../src/terminal/mobile';
+import { neofetchBlock } from '../src/commands/system';
 import { SystemClient } from '../src/system/stats';
 import { execute } from '../src/shell/executor';
 import { complete } from '../src/terminal/completion';
@@ -141,6 +143,14 @@ if (terminal.prefsSalvas !== 2) {
   console.error(`FAIL  font só grava quando muda (esperado 2, obtido ${terminal.prefsSalvas})`);
 } else console.log('ok    font só grava as preferências quando o tamanho muda');
 
+// Numa tela de toque o padrão é outro, e o `font reset` tem que voltar para ele,
+// não para o do desktop.
+env.defaultFontSize = TOUCH_FONT_SIZE;
+await check('font', has('default 12'), 'font: padrão do aparelho na tela de toque');
+await check('font reset', (o) => o === '12px\n' && env.fontSize === 12, 'font reset: volta ao padrão do aparelho');
+env.defaultFontSize = DEFAULT_FONT_SIZE;
+await check('font reset', (o) => o === '14px\n', 'font reset: volta a 14 no desktop');
+
 // --- Camada 3: a máquina de verdade -------------------------------------
 //
 // No teste headless não há servidor, então todo comando que depende da API cai
@@ -258,6 +268,42 @@ count++;
     failures++;
     console.error('FAIL  tela minuscula troca a arte por texto');
   } else console.log('ok    tela minuscula troca a arte por texto');
+}
+
+// --- Mobile ---------------------------------------------------------------
+//
+// Os chips existem para substituir digitação, então o que eles digitam tem que
+// existir: chip apontando para comando que saiu do registro só dá erro no
+// celular de outra pessoa.
+count++;
+const orphans = CHIPS.filter((chip) => /^[a-z]/.test(chip.data)).filter(
+  (chip) => !registry.has(chip.data.trim().split(' ')[0]!),
+);
+if (orphans.length > 0) {
+  failures++;
+  console.error(`FAIL  chip sem comando: ${orphans.map((chip) => chip.label).join(', ')}`);
+} else console.log('ok    todo chip digita um comando que existe');
+
+// A framboesa sai quando não cabe ao lado do texto: embrulhada ela não encolhe,
+// só quebra no meio das palavras.
+{
+  const info = [
+    'guest@oluizfernando',
+    '-'.repeat(25),
+    'Host: Raspberry Pi 5 Model B Rev 1.1',
+    'Uptime: 3 days, 4 hours',
+  ];
+  const bare = (lines: string[]) => lines.map((line) => line.replace(/\x1b\[[0-9;]*m/g, ''));
+  const wide = bare(neofetchBlock(info, 80));
+  const narrow = bare(neofetchBlock(info, 44));
+
+  count++;
+  const drew = wide.some((line) => line.includes('.~~.')) && wide.every((line) => line.length <= 80);
+  const dropped = narrow.every((line) => !line.includes('.~~.') && line.length <= 44);
+  if (!drew || !dropped || !narrow.some((line) => line.includes('Host:'))) {
+    failures++;
+    console.error('FAIL  neofetch larga a arte quando a tela é estreita');
+  } else console.log('ok    neofetch larga a arte quando a tela é estreita');
 }
 
 // Tab-completion

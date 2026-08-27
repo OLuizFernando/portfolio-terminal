@@ -41,8 +41,9 @@ export function saveHistory(history: string[]): void {
   write(HISTORY_KEY, history);
 }
 
-export function loadPrefs(): Prefs {
-  return { ...DEFAULT_PREFS, ...read<Partial<Prefs>>(PREFS_KEY, {}) };
+/** O padrão da fonte vem de fora porque depende do aparelho, não da preferência. */
+export function loadPrefs(fontSize = DEFAULT_FONT_SIZE): Prefs {
+  return { ...DEFAULT_PREFS, fontSize, ...read<Partial<Prefs>>(PREFS_KEY, {}) };
 }
 
 export function savePrefs(prefs: Prefs): void {

@@ -1,4 +1,13 @@
-[draft — real content lands in phase 3]
-
-2019-01-01 00:00:00  INFO   career: boot
-2026-08-26 00:00:00  INFO   portfolio: rewriting the whole thing as a terminal
+2020-01-01 00:00:00  INFO   career: boot, first Python with Curso em Vídeo
+2023-01-01 00:00:00  INFO   self: 100 Days of Code, Python on purpose this time
+2024-01-01 00:00:00  INFO   fatec: enrolled, Systems Analysis and Development
+2024-06-08 05:32:09  INFO   pagefinder: init, CS50x final project
+2024-11-12 09:28:00  INFO   fintrack: init
+2025-04-30 18:46:49  INFO   estudafatec: init
+2025-07-01 00:00:00  INFO   veeva: hired, Data Steward Intern
+2025-07-01 00:00:00  WARN   self: college and a job now share the same 24 hours
+2025-11-01 00:00:00  INFO   veeva: role change, Software Engineer Intern
+2026-07-01 00:00:00  INFO   veeva: role change, Associate Software Engineer
+2026-08-27 01:34:49  INFO   portfolio: init, rewritten as a terminal
+2026-08-27 01:35:03  ERROR  doom: Wad file doesn't have IWAD or PWAD id
+2026-08-27 01:35:03  INFO   doom: recovered, emscripten needed locateFile

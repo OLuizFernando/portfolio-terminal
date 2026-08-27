@@ -146,6 +146,13 @@ Fora da home (easter eggs):
   ela de fato abre. Vários cursos da Udemy não têm certificado público, e um
   link de página de venda debaixo de um rótulo de certificado é uma promessa que
   a URL não cumpre.
+- **A precisão do `career.log` é honesta, não uniforme.** Linha que veio de um
+  commit carrega o segundo real (`2024-06-08 05:32:09` é o primeiro commit do
+  pagefinder); linha que veio da memória do Luiz fica em `00:00:00`. Encher os
+  segundos que ninguém registrou faria o log inteiro parecer inventado, que é o
+  oposto do efeito. O log também tem `WARN` e `ERROR`: todo erro vem seguido da
+  linha que o resolveu, porque log de carreira sem erro é currículo com carimbo
+  de data.
 
 ### 2.4 Comandos
 
@@ -754,14 +761,13 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 
 **Detalhes medidos e decididos estão em 2.8.**
 
-### Fase 3 — Alma
+### Fase 3 — Alma ✅ concluída em 2026-08-27
 
 - [x] Boot sequence completo — concluído em 2026-08-27
 - [x] API FastAPI + `neofetch`, `uptime`, `free`, `df`, `top` ao vivo, `ps`,
       `/proc/*` — concluído em 2026-08-27 (também `whoami`, `date`, `uname`)
-- [ ] Conteúdo real escrito em inglês — `about.txt`, `experience/` e
-      `projects/` já estão escritos; falta o `/var/log/career.log`, o único
-      arquivo que ainda carrega o marcador de rascunho
+- [x] Conteúdo real escrito em inglês — concluído em 2026-08-27: `about.txt`,
+      `education/`, `experience/`, `projects/` e o `/var/log/career.log`
 
 ### Fase 4 — Polimento
 
@@ -785,9 +791,6 @@ Não há lançamento parcial.
 
 ## 6. Pendências em aberto
 
-- **Escrever o `/var/log/career.log`** (último item que segura o fim da fase 3):
-  é o que ainda está marcado `[draft — real content lands in phase 3]`, e só o
-  Luiz tem a trajetória para montar a linha do tempo
 - Escrever o conteúdo em português e ligar o comando `lang` — é o último item
   aberto da fase 4, e depende do conteúdo em inglês existir primeiro
 - As frases do `fortune` são um chute inicial em `content/en/usr/share/fortunes`:

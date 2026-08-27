@@ -1,0 +1,10 @@
+Next.js
+Node.js
+PostgreSQL
+MongoDB
+AWS S3
+Stripe
+Tailwind CSS
+Jest
+GitHub Actions
+Vercel

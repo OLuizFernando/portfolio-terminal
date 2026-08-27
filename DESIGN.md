@@ -100,7 +100,10 @@ arquivos que ele deixou lá.
 │   ├── veeva.txt
 │   └── ...
 └── projects/
-    └── <projeto>/
+    ├── estudafatec/
+    ├── fintrack/
+    ├── pagefinder/
+    └── portfolio-terminal/
         ├── README.txt
         ├── stack.txt
         └── links.txt
@@ -122,6 +125,13 @@ Fora da home (easter eggs):
 - **Sem blog / sem `posts/`.**
 - Formato de pasta por projeto permite coisas como
   `cat projects/*/stack.txt | grep -i react`.
+- **São quatro projetos, e quatro é o teto**: `estudafatec`, `fintrack`,
+  `pagefinder` e o `portfolio-terminal`. Cada um mostra uma coisa diferente
+  (produto em produção, CRUD com gráficos, projeto final do CS50x, e a máquina
+  em que você está). Um quinto que repetisse qualquer um deles só faria o
+  visitante ler mais para saber o mesmo.
+- O `estudafatec` é repositório privado: o `links.txt` dele publica a URL de
+  produção e diz que a fonte é fechada, em vez de apontar para um 404.
 
 ### 2.4 Comandos
 
@@ -735,8 +745,9 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 - [x] Boot sequence completo — concluído em 2026-08-27
 - [x] API FastAPI + `neofetch`, `uptime`, `free`, `df`, `top` ao vivo, `ps`,
       `/proc/*` — concluído em 2026-08-27 (também `whoami`, `date`, `uname`)
-- [ ] Conteúdo real escrito em inglês — **depende do Luiz**: os `.txt` de
-      `experience/` e `projects/` ainda estão marcados como rascunho
+- [ ] Conteúdo real escrito em inglês — `about.txt`, `experience/` e
+      `projects/` já estão escritos; falta o `/var/log/career.log`, o único
+      arquivo que ainda carrega o marcador de rascunho
 
 ### Fase 4 — Polimento
 
@@ -760,10 +771,9 @@ Não há lançamento parcial.
 
 ## 6. Pendências em aberto
 
-- **Escrever o conteúdo real** (bloqueia o fim da fase 3): `about.txt`,
-  `resume.txt`, `experience/veeva.txt` e `projects/` estão marcados
-  `[draft — real content lands in phase 3]` e só o Luiz tem essa informação
-- Definir quais projetos reais entram em `projects/`
+- **Escrever o `/var/log/career.log`** (último item que segura o fim da fase 3):
+  é o que ainda está marcado `[draft — real content lands in phase 3]`, e só o
+  Luiz tem a trajetória para montar a linha do tempo
 - Escrever o conteúdo em português e ligar o comando `lang` — é o último item
   aberto da fase 4, e depende do conteúdo em inglês existir primeiro
 - As frases do `fortune` são um chute inicial em `content/en/usr/share/fortunes`:

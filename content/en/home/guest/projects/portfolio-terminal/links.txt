@@ -1,2 +1,2 @@
-live    https://oluizfernando.com.br
-source  https://github.com/<user>/portfolio
+Live:    https://www.oluizfernando.com.br
+Source:  https://github.com/oluizfernando/portfolio

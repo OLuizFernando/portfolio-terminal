@@ -5,12 +5,16 @@
  */
 import manifest from '../src/generated/manifest.json';
 import { buildRegistry, mountUsrBin } from '../src/commands/registry';
+import { mountProc } from '../src/system/proc';
 import type { ShellContext } from '../src/commands/types';
 import type { DirNode, Manifest } from '../src/fs/types';
 import { Vfs } from '../src/fs/vfs';
 import { Env } from '../src/shell/env';
+import { SystemClient } from '../src/system/stats';
 import { execute } from '../src/shell/executor';
 import { complete } from '../src/terminal/completion';
+import { runBoot } from '../src/terminal/boot';
+import art from '../src/generated/art.json';
 
 const langs = (manifest as unknown as Manifest).langs;
 const root = structuredClone(langs['en'] as DirNode);
@@ -18,16 +22,22 @@ const root = structuredClone(langs['en'] as DirNode);
 const vfs = new Vfs(root);
 const registry = buildRegistry();
 mountUsrBin(vfs, registry);
+mountProc(vfs);
 
 const env = new Env();
 
 /** Registra o que o comando pediu ao terminal, para os testes conferirem. */
 const terminal = { fontSize: env.fontSize, prefsSalvas: 0 };
 
+// Sem servidor no teste headless: o fetch falha e o cliente vira SystemOffline,
+// que é exatamente o cenário de "API fora do ar" que os comandos precisam tratar.
+const system = new SystemClient();
+
 const ctx: ShellContext = {
   vfs,
   env,
   registry,
+  system,
   savePrefs: () => {
     terminal.prefsSalvas++;
   },
@@ -130,6 +140,108 @@ if (terminal.prefsSalvas !== 2) {
   failures++;
   console.error(`FAIL  font só grava quando muda (esperado 2, obtido ${terminal.prefsSalvas})`);
 } else console.log('ok    font só grava as preferências quando o tamanho muda');
+
+// --- Camada 3: a máquina de verdade -------------------------------------
+//
+// No teste headless não há servidor, então todo comando que depende da API cai
+// no caminho de indisponibilidade. É de propósito: é esse o caminho que precisa
+// continuar funcionando quando o Pi estiver fora do ar.
+
+await check('whoami', (o) => o === 'guest\n');
+await check('date', (o) => /^\w{3} \w{3} [ \d]\d \d\d:\d\d:\d\d [+-]\d{4} \d{4}\n$/.test(o));
+
+await check('uptime', has('uptime: cannot reach the machine'), 'uptime sem API');
+await check('free -h', has('free: cannot reach the machine'), 'free sem API');
+await check('df', has('df: cannot reach the machine'), 'df sem API');
+await check('ps', has('ps: cannot reach the machine'), 'ps sem API');
+await check('neofetch', has('neofetch: cannot reach the machine'), 'neofetch sem API');
+await check('uname -a', has('uname: cannot reach the machine'), 'uname sem API');
+await check('cat /proc/meminfo', has('cannot reach the machine'), 'cat /proc sem API');
+
+await check('free -z', has("free: invalid option -- 'z'"));
+await check('top | cat', has('top: cannot write to a pipe'), 'top recusa pipe');
+
+// A indisponibilidade da máquina não pode derrubar o resto da sessão.
+await check('uptime ; echo alive', has('alive'), 'shell sobrevive a API fora');
+await check('uptime || echo fallback', has('fallback'), 'API fora tem codigo de erro');
+
+await check('ls /proc', has('cpuinfo', 'meminfo', 'loadavg'));
+await check('ls -l /proc', has('cpuinfo'), 'ls -l /proc');
+await check('help --all', has('neofetch', 'top', 'free', 'df', 'ps', 'uptime'), 'camada 3 no help --all');
+await check('ls /usr/bin', has('neofetch', 'top', 'uptime'), 'camada 3 no /usr/bin');
+await check('man top', has('press'), 'man top');
+
+// --- Boot ----------------------------------------------------------------
+
+/**
+ * A largura da arte vem do arquivo, nunca de um número fixo: o `art/banner.txt`
+ * existe para ser trocado, e um teste que assume 100 colunas quebra na primeira
+ * troca sem que nada esteja errado.
+ */
+const bannerCols = Math.max(...art.banner.map((line) => [...line].length));
+
+/** Roda o boot capturando a saída, e devolve quanto tempo levou. */
+async function boot(skipAfterMs: number | null, cols = bannerCols) {
+  const lines: string[] = [];
+  const started = Date.now();
+
+  await runBoot({
+    output: { print: (text) => lines.push(text), cols },
+    system,
+    onSkippable: (skip) => {
+      const timer = skipAfterMs === null ? null : setTimeout(skip, skipAfterMs);
+      return () => {
+        if (timer) clearTimeout(timer);
+      };
+    },
+  });
+
+  return { text: lines.join(''), ms: Date.now() - started };
+}
+
+const full = await boot(null);
+count++;
+if (full.ms < 1500 || full.ms > 4500) {
+  failures++;
+  console.error(`FAIL  boot leva 1.5-4.5s (levou ${full.ms}ms)`);
+} else console.log(`ok    boot leva ${(full.ms / 1000).toFixed(1)}s ate o prompt`);
+
+count++;
+if (!full.text.includes('Booting Linux') || !full.text.includes(art.banner[0]!)) {
+  failures++;
+  console.error('FAIL  boot imprime POST e banner');
+} else console.log('ok    boot imprime POST e banner');
+
+count++;
+// Sem API no teste: o bloco de sistema tem que degradar, não sumir nem travar.
+if (!full.text.includes('the machine is not answering')) {
+  failures++;
+  console.error('FAIL  boot degrada sem API');
+} else console.log('ok    boot degrada sem API');
+
+const skipped = await boot(50);
+count++;
+if (skipped.ms > 400) {
+  failures++;
+  console.error(`FAIL  qualquer tecla pula o boot (levou ${skipped.ms}ms)`);
+} else console.log(`ok    qualquer tecla pula o boot (${skipped.ms}ms)`);
+
+count++;
+if (skipped.text !== full.text) {
+  failures++;
+  console.error('FAIL  pular o boot mostra o mesmo texto');
+} else console.log('ok    pular o boot mostra o mesmo texto');
+
+count++;
+{
+  // Uma coluna a menos do que a arte precisa já basta: o corte é "cabe inteira
+  // ou não entra", sem meio-termo.
+  const narrow = (await boot(10, bannerCols - 1)).text;
+  if (narrow.includes(art.banner[0]!) || !narrow.includes('OLuizFernando')) {
+    failures++;
+    console.error('FAIL  tela estreita troca a arte por texto');
+  } else console.log('ok    tela estreita troca a arte por texto');
+}
 
 // Tab-completion
 count++;

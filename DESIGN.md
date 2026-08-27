@@ -70,7 +70,8 @@ deve ser **auto-hospedada** — o Pi já serve os estáticos e o Cloudflare cach
 borda, então não há motivo pra depender de terceiro. Só o peso Regular em `.woff2`
 resolve (paleta é branco puro e o único destaque é negrito, então bastam **Regular e
 Bold**). Sem variante Nerd Font: o `neofetch` e o `tree` usam apenas ASCII e caracteres
-de box-drawing, que a fonte já cobre nativamente.
+de box-drawing, e o banner do boot acrescenta blocos (`█`, U+2588) — a JetBrains
+Mono cobre os três nativamente.
 
 ### 2.3 Estrutura do filesystem
 
@@ -153,7 +154,7 @@ reportado."), `rm -rf /` (finge apagar tudo e restaura), `vim` (não deixa sair 
 Sequência, do primeiro ao último frame:
 
 1. Linhas de POST/kernel **genéricas**, com cara de `dmesg` (~8-12 linhas)
-2. Banner ASCII
+2. Banner ASCII — **ANSI Shadow**, vindo de `art/banner.txt`
 3. Bloco de sistema com **dados reais** (modelo do Pi, kernel, uptime, temperatura)
 4. Linha de boas-vindas curta
 5. Dica de idioma — **só** se o navegador for pt-BR:
@@ -161,8 +162,26 @@ Sequência, do primeiro ao último frame:
 6. `--help` curto
 7. Prompt
 
-**Duração:** 3-4 segundos até o prompt. Qualquer tecla pula para o fim.
+**Duração:** medida em **2,1s** até o prompt (`npm test` trava a faixa em 1,5-4,5s).
+Ficou abaixo dos 3-4s previstos de propósito: com a sequência montada, quatro
+segundos antes de poder digitar são longos demais, e quem já viu tem a tecla de
+pular. Qualquer tecla salta para o fim — e o teste confere que o texto pulado é
+idêntico ao texto completo.
+
 **Sem tela de login.** Sem BIOS elaborado. O boot termina em `~`.
+
+> **A dica de idioma (item 5) ficou para a fase 4**, junto do comando `lang`.
+> Anunciar `lang pt` antes de ele existir seria pior do que não anunciar.
+
+**O banner mora fora do código**, em `art/banner.txt`, e vira JSON no build. Num
+`.ts` seria preciso escapar barra invertida e crase a cada troca — e a maioria
+das fontes figlet é feita de barra invertida. Trocar a arte é colar por cima do
+arquivo.
+
+O nome inteiro em ANSI Shadow numa linha só dá 106 colunas, larga demais para as
+80 clássicas; por isso está empilhado em `OLuiz` / `Fernando`, com 69. **Se a arte
+não couber na tela, o boot imprime `OLuizFernando` em texto** — arte embrulhada
+não fica menor, fica quebrada, e é isso que aconteceria no celular.
 
 ### 2.6 Idiomas
 
@@ -393,7 +412,24 @@ temperatura da CPU, RAM usada/livre, uso de disco, lista de processos.
 Alimenta de uma vez: `neofetch`, `uptime`, `free`, `df`, `ps`, `top`,
 `/proc/cpuinfo`, `/proc/meminfo`.
 
+**`GET /api/proc/{name}`** — o conteúdo **cru** de um arquivo de /proc, em texto.
+Lista fechada: `cpuinfo`, `meminfo`, `uptime`, `loadavg`, `version`. É o que faz
+`cat /proc/meminfo` mostrar o arquivo de verdade em vez de uma imitação. Por isso
+esses arquivos existem na árvore com **tamanho zero** — que é, por acaso,
+exatamente o que `ls -l` mostra num /proc de verdade.
+
 **`POST /api/log`** — recebe lotes de comandos. Único endpoint de escrita.
+Ainda não existe; é da fase 4.
+
+**Degradação:** o site é estático e não depende da API para existir. Quando ela
+não responde, cada comando de camada 3 responde `cannot reach the machine` e o
+resto da sessão segue intacta — inclusive o boot, que troca o bloco de sistema
+por duas linhas e continua. Isso é testado: metade dos testes de camada 3 roda
+justamente sem servidor.
+
+**Fora do Linux não há /proc.** Num Mac a API entra em modo sintético e marca
+`synthetic: true` no JSON; o terminal exibe o aviso em toda tela que mostra esses
+números. Sem isso, o frontend só poderia ser desenvolvido no Pi.
 
 **Decisões de privacidade:**
 
@@ -452,8 +488,16 @@ diretório é servido direto, e os nomes com hash do Vite dão URL nova a cada v
 ## 3.6 Mapa do repositório
 
 ```
-scripts/build-fs.mjs      varre content/ → src/generated/manifest.json
+scripts/build-fs.mjs      varre content/ e art/ → src/generated/
 content/<lang>/           espelha a raiz do filesystem simulado (etc, home, var)
+art/banner.txt            arte ASCII crua do boot; trocar = colar por cima
+api/
+├── main.py               FastAPI: /api/stats, /api/proc/{name}, /api/health
+├── probe.py              leitura de /proc e /sys, sem dependência externa
+└── fake.py               snapshot sintético, para desenvolver fora do Linux
+deploy/
+├── nginx.conf            server na 8080: dist/ estático + proxy de /api
+└── portfolio-api.service unit do systemd para o uvicorn
 src/
 ├── main.ts               monta tudo e inicia a sessão
 ├── storage.ts            localStorage: histórico e preferências
@@ -474,12 +518,20 @@ src/
 │   ├── nav.ts            navegação
 │   ├── text.ts           ferramentas de texto
 │   ├── doom.ts           o comando `doom`
-│   └── font.ts           o comando `font`
+│   ├── font.ts           o comando `font`
+│   ├── flags.ts          parsing de flags curtas, compartilhado
+│   └── system.ts         camada 3: uname, uptime, free, df, ps, neofetch, top
+├── system/
+│   ├── stats.ts          cliente do /api/stats, com cache e SystemOffline
+│   ├── proc.ts           /proc do filesystem simulado, lido da máquina real
+│   ├── format.ts         tamanhos, tempos e tabelas no formato do coreutils
+│   └── top.ts            o laço de repintura do `top`
 ├── doom/
 │   ├── runtime.ts        carrega o wasm, roda o laço, desenha no terminal
 │   └── keymap.ts         teclado do navegador → códigos do DOOM
 └── terminal/
     ├── terminal.ts       xterm.js + WebGL + fit
+    ├── boot.ts           a sequência de boot, pulável
     ├── lineEditor.ts     edição de linha, histórico, atalhos
     └── completion.ts     Tab-completion de comando e caminho
 wasm/
@@ -490,7 +542,10 @@ public/doom/              artefatos compilados, versionados
 test/shell.test.ts        smoke test headless
 ```
 
-**Comandos:** `npm run dev`, `npm run build`, `npm test`, `npm run fs`.
+**Comandos:** `npm run dev`, `npm run build`, `npm test`, `npm run fs`. A API sobe
+à parte com `.venv/bin/python -m uvicorn api.main:app --port 8000`; o servidor do
+Vite faz proxy de `/api` para lá, e em produção quem junta as duas coisas na mesma
+origem é o nginx.
 Para recompilar o DOOM: `./wasm/fetch-sources.sh && ./wasm/build.sh` (precisa do
 emsdk; **não** é necessário para rodar nem para fazer deploy).
 
@@ -564,10 +619,11 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 
 ### Fase 3 — Alma
 
-- [ ] Boot sequence completo
-- [ ] API FastAPI + `neofetch`, `uptime`, `free`, `df`, `top` ao vivo, `ps`,
-      `/proc/*`
-- [ ] Conteúdo real escrito em inglês
+- [x] Boot sequence completo — concluído em 2026-08-27
+- [x] API FastAPI + `neofetch`, `uptime`, `free`, `df`, `top` ao vivo, `ps`,
+      `/proc/*` — concluído em 2026-08-27 (também `whoami`, `date`, `uname`)
+- [ ] Conteúdo real escrito em inglês — **depende do Luiz**: os `.txt` de
+      `experience/` e `projects/` ainda estão marcados como rascunho
 
 ### Fase 4 — Polimento
 
@@ -576,7 +632,8 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 - [ ] Logging + comando `stats`
 - [ ] Easter eggs escolhidos + `crt`/efeitos
 - [ ] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`)
-- [ ] Deploy: nginx na 8080, systemd para a API, script de deploy
+- [x] Deploy: nginx na 8080 e unit do systemd escritos em `deploy/` — falta
+      instalar no Pi e escrever o `deploy-portfolio`
 
 ### Critério de publicação
 
@@ -587,8 +644,10 @@ Não há lançamento parcial.
 
 ## 6. Pendências em aberto
 
+- **Escrever o conteúdo real** (bloqueia o fim da fase 3): `about.txt`,
+  `resume.txt`, `experience/veeva.txt` e `projects/` estão marcados
+  `[draft — real content lands in phase 3]` e só o Luiz tem essa informação
 - Definir quais projetos reais entram em `projects/`
 - Escolher os 4-5 easter eggs da camada 4 (a graça está na densidade, não na
   quantidade — cada easter egg mal-acabado enfraquece os bons)
-- Escrever o conteúdo dos `.txt`
 - Decidir se o DOOM tem som (hoje é compilado sem)

@@ -46,15 +46,21 @@ main() {
 
   # O uvicorn le api/*.py na subida: sem restart ele segue servindo o codigo
   # antigo depois do pull.
-  if [ "$restart_api" = true ] || changed api/; then
-    echo "[deploy] reiniciando a API..."
-    sudo -n systemctl restart portfolio-api
+  if changed api/; then
+    restart_api=true
   fi
 
   if changed deploy/portfolio-api.service; then
     echo "[deploy] unit mudou, reinstalando..."
     sudo -n cp deploy/portfolio-api.service /etc/systemd/system/
     sudo -n systemctl daemon-reload
+    restart_api=true
+  fi
+
+  # Um restart só, no fim: as condicoes acima costumam disparar juntas, e
+  # reiniciar tres vezes seguidas so alonga a janela em que a API esta fora.
+  if [ "$restart_api" = true ]; then
+    echo "[deploy] reiniciando a API..."
     sudo -n systemctl restart portfolio-api
   fi
 
@@ -68,8 +74,17 @@ main() {
   # Conferência de verdade, porque "o deploy passou" não é a mesma coisa que "o
   # site funciona". O `linux` falso significa que a API não achou /proc e está
   # servindo número inventado.
-  local health
-  health="$(curl -s -m 5 localhost:8080/api/health || true)"
+  #
+  # Com paciência: o systemctl volta assim que faz o fork, e o uvicorn ainda leva
+  # um instante para ligar o socket. Perguntar uma vez só, logo depois do
+  # restart, é perder a corrida e acusar 502 num deploy que deu certo.
+  local health=""
+  for _ in $(seq 20); do
+    health="$(curl -s -m 5 localhost:8080/api/health || true)"
+    [ "$health" = '{"ok":true,"linux":true}' ] && break
+    sleep 1
+  done
+
   if [ "$health" != '{"ok":true,"linux":true}' ]; then
     echo "[deploy] ATENCAO: /api/health respondeu: ${health:-nada}"
     exit 1

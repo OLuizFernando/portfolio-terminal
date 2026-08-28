@@ -1,2 +1,2 @@
 Live:    https://www.oluizfernando.com.br
-Source:  https://github.com/oluizfernando/portfolio
+Source:  https://github.com/oluizfernando/portfolio-terminal

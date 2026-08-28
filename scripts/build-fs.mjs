@@ -89,7 +89,7 @@ for (const lang of langs) manifest.langs[lang] = walk(path.join(contentDir, lang
  * máquina, e o changelog é a mensagem de commit — que este repositório escreve
  * em inglês, traduzido ou não o site.
  */
-const REPO_URL = 'https://github.com/OLuizFernando/portfolio';
+const REPO_URL = 'https://github.com/OLuizFernando/portfolio-terminal';
 const SITE_URL = 'https://oluizfernando.com.br';
 
 /** Um commit por linha: hash curto, epoch e assunto. Vazio fora de um checkout. */

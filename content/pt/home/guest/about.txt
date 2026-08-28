@@ -1,6 +1,6 @@
 Oi, meu nome é Luiz Fernando!
 
-Sou brasileiro, desenvolvedor web apaixonado pelo que faz, com mais de 3 anos de experiência somando trabalho profissional, projetos freelance, projetos pessoais e estudo contínuo.
+Sou desenvolvedor web apaixonado pelo que faz, com mais de 3 anos de experiência somando trabalho profissional, projetos freelance, projetos pessoais e estudo contínuo.
 
 Foco em escrever código limpo e escalável, apoiado em boas práticas de arquitetura de software, testes automatizados e integração contínua.
 

@@ -81,6 +81,114 @@ const langs = fs
 const manifest = { generatedAt: Math.floor(Date.now() / 1000), langs: {} };
 for (const lang of langs) manifest.langs[lang] = walk(path.join(contentDir, lang));
 
+/**
+ * Dois arquivos da árvore não são escritos à mão: eles descrevem o build que os
+ * gerou, e escrever isso à mão seria escrever mentira com data de validade.
+ *
+ * São iguais nos dois idiomas de propósito. `/etc/os-release` é formato de
+ * máquina, e o changelog é a mensagem de commit — que este repositório escreve
+ * em inglês, traduzido ou não o site.
+ */
+const REPO_URL = 'https://github.com/OLuizFernando/portfolio';
+const SITE_URL = 'https://oluizfernando.com.br';
+
+/** Um commit por linha: hash curto, epoch e assunto. Vazio fora de um checkout. */
+function gitLog() {
+  try {
+    const raw = execFileSync('git', ['log', '--no-merges', '--pretty=format:%h\x1f%ct\x1f%s'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    return raw
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => {
+        const [hash, at, subject] = line.split('\x1f');
+        return { hash, at: Number(at), subject };
+      });
+  } catch {
+    return [];
+  }
+}
+
+const day = (epoch) => new Date(epoch * 1000).toISOString().slice(0, 10);
+
+function osRelease(commits) {
+  const head = commits[0];
+  const version = `${day(head.at).replace(/-/g, '.')} (${head.hash})`;
+  return [
+    'NAME="portfolio"',
+    'ID=portfolio',
+    `PRETTY_NAME="portfolio ${version}"`,
+    `VERSION="${version}"`,
+    `VERSION_ID=${day(head.at).replace(/-/g, '.')}`,
+    `BUILD_ID=${head.hash}`,
+    `HOME_URL="${SITE_URL}"`,
+    `SOURCE_URL="${REPO_URL}"`,
+    'ANSI_COLOR="0;32"',
+    '',
+  ].join('\n');
+}
+
+function changelog(commits) {
+  const lines = [
+    'portfolio -- what changed, from the git history of the machine you are on.',
+    '',
+    `Generated at build time from ${REPO_URL}.`,
+    '',
+  ];
+
+  let previous = '';
+  for (const { hash, at, subject } of commits) {
+    const date = day(at);
+    if (date !== previous) {
+      if (previous !== '') lines.push('');
+      lines.push(date);
+      previous = date;
+    }
+    lines.push(`  ${hash}  ${subject}`);
+  }
+
+  return lines.join('\n') + '\n';
+}
+
+/**
+ * Enfia um arquivo gerado na árvore, criando os diretórios que faltarem e
+ * empurrando o mtime dos pais — sem isso o `ls -l` de um diretório novo mostra
+ * a data em que o walk não achou nada.
+ */
+function place(tree, filePath, content, mtime) {
+  const parts = filePath.split('/').filter(Boolean);
+  const name = parts.pop();
+  let node = tree;
+
+  for (const part of parts) {
+    if (!node.children[part]) node.children[part] = { kind: 'dir', children: {}, mtime };
+    node.mtime = Math.max(node.mtime, mtime);
+    node = node.children[part];
+  }
+
+  node.mtime = Math.max(node.mtime, mtime);
+  node.children[name] = { kind: 'file', content, mtime };
+  tree.mtime = Math.max(tree.mtime, mtime);
+}
+
+const commits = gitLog();
+if (commits.length > 0) {
+  const mtime = commits[0].at;
+  for (const lang of langs) {
+    place(manifest.langs[lang], '/etc/os-release', osRelease(commits), mtime);
+    place(manifest.langs[lang], '/usr/share/doc/portfolio/CHANGELOG', changelog(commits), mtime);
+  }
+  console.log(`[build-fs] gerados: /etc/os-release e o CHANGELOG de ${commits.length} commit(s)`);
+} else {
+  // Fora de um checkout do git não há o que descrever, e um arquivo com data
+  // inventada seria pior do que arquivo nenhum.
+  console.log('[build-fs] sem git: /etc/os-release e o CHANGELOG ficam de fora');
+}
+
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(outFile, JSON.stringify(manifest));
 

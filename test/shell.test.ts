@@ -494,8 +494,67 @@ if (c3.replacement !== '~/projects/') {
   console.error(`FAIL  complete("cat ~/proj") -> ${JSON.stringify(c3)}`);
 } else console.log('ok    complete: cat ~/proj -> ~/projects/');
 
-// --- lang ---------------------------------------------------------------
+// --- lang: as árvores de conteúdo ------------------------------------------
+//
+// Aferido contra o manifesto, e não contra a árvore montada: aqui o assunto é o
+// que existe em `content/`, e um `>` de um teste anterior teria sujado a árvore.
 
+/** Todo caminho da árvore, com barra no fim para diretório. */
+function treePaths(node: DirNode, prefix = ''): string[] {
+  const out: string[] = [];
+  for (const [name, child] of Object.entries(node.children)) {
+    const path = `${prefix}/${name}`;
+    if (child.kind === 'dir') {
+      out.push(path + '/', ...treePaths(child, path));
+    } else {
+      out.push(path);
+    }
+  }
+  return out.sort();
+}
+
+// O inglês é a referência por decisão do projeto (2.6: é o padrão para todos), e
+// não por ser o primeiro do objeto — a ordem do manifesto não promete nada.
+const baseLang = 'en';
+const basePaths = treePaths(langs[baseLang] as DirNode);
+const trees = Object.entries(langs)
+  .filter(([lang]) => lang !== baseLang)
+  .map(([lang, root]) => [lang, treePaths(root as DirNode)] as const);
+const fileCount = (paths: readonly string[]) => paths.filter((path) => !path.endsWith('/')).length;
+
+for (const [lang, paths] of trees) {
+  // A quantidade primeiro, porque é o que se percebe: um arquivo escrito num
+  // idioma e esquecido no outro deixa o visitante que troca de idioma sem ele.
+  count++;
+  if (fileCount(paths) !== fileCount(basePaths)) {
+    failures++;
+    console.error(
+      `FAIL  content/${lang} tem ${fileCount(paths)} arquivos e content/${baseLang} tem ${fileCount(basePaths)}`,
+    );
+  } else {
+    console.log(`ok    content/${lang} e content/${baseLang} têm ${fileCount(paths)} arquivos cada`);
+  }
+
+  // E os caminhos, porque a contagem sozinha passa com um `degree.txt` virando
+  // `formacao.txt`: mesma quantidade, e o visitante que troca de idioma cai no
+  // home porque o diretório em que ele estava deixou de existir (2.6).
+  count++;
+  const faltando = basePaths.filter((path) => !paths.includes(path));
+  const sobrando = paths.filter((path) => !basePaths.includes(path));
+  if (faltando.length > 0 || sobrando.length > 0) {
+    failures++;
+    console.error(
+      `FAIL  content/${lang} não espelha content/${baseLang}` +
+        (faltando.length > 0 ? `\n      falta:  ${faltando.join(', ')}` : '') +
+        (sobrando.length > 0 ? `\n      sobra:  ${sobrando.join(', ')}` : ''),
+    );
+  } else {
+    console.log(`ok    content/${lang} espelha content/${baseLang} caminho a caminho`);
+  }
+}
+
+
+// --- lang ---------------------------------------------------------------
 await check('lang', (o) => o.startsWith('en (available:') && o.includes('pt'), 'lang: atual e disponíveis');
 await check('lang xx', has('no such language: xx', 'available:'), 'lang: código inexistente');
 await check('lang en pt', has('usage: lang'), 'lang: argumento a mais');

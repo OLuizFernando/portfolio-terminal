@@ -1,0 +1,15 @@
+Veeva Systems Inc.
+https://www.veeva.com
+
+Engenheiro de Software Associado
+Jul 2026 - Presente
+
+  - Trabalho com soluções locais como parte do time de desenvolvimento da América Latina, ganhando experiência prática em entender as necessidades reais do mercado e desenvolver novos produtos.
+
+  - Estou aprendendo rápido enquanto desenvolvo APIs com FastAPI e Flask, construo front ends web responsivos com React, Vue.js e Tailwind CSS, escrevo testes automatizados com Pytest e Jest.js, e containerizo serviços usando Docker e Docker Compose.
+
+Estagiário de Engenharia de Software
+Nov 2025 - Jun 2026
+
+Estagiário de Data Steward
+Jul 2025 - Out 2025

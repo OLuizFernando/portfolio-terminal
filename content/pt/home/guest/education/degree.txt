@@ -1,0 +1,10 @@
+Faculdade de Tecnologia do Estado de São Paulo (Fatec)
+
+Análise e Desenvolvimento de Sistemas
+Jan 2024 - Dez 2026 (em andamento)
+
+  Curso tecnólogo de três anos, focado em construir software, não em
+  pesquisa.
+
+  O vestibular é o mesmo para o qual construí o ~/projects/estudafatec. Eu
+  prestei a prova antes de escrever a plataforma para ela.

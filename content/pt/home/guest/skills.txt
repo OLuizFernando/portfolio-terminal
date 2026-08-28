@@ -1,0 +1,8 @@
+Linguagens de Programação:  Python, JavaScript, Java, C
+Desenvolvimento Web:        FastAPI, Flask, React, Next.js, Vite, Node.js
+Estilização:                Tailwind CSS, Shadcn/UI, Bootstrap
+Banco de Dados:             PostgreSQL, MySQL, MongoDB, SQLite
+Testes:                     Jest, Postman, Insomnia, Vitest, Pytest
+DevOps e Infra:             Git, GitHub, GitHub Actions, Docker, Cloudflare, Vercel, AWS
+Data Science e ML:          Pandas, Scikit-learn, Matplotlib, NumPy
+Sistemas Operacionais:      MacOS, Windows, Linux (Arch, Mint, Ubuntu, Raspbian)

@@ -1,0 +1,5 @@
+System Design Interview          Alex Xu
+Cracking the Coding Interview    Gayle Laakmann McDowell
+Entendendo Algoritmos            Aditya Y. Bhargava
+A Startup Enxuta                 Eric Ries
+Steve Jobs                       Walter Isaacson

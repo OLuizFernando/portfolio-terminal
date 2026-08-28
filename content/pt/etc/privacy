@@ -1,0 +1,70 @@
+PRIVACIDADE
+===========
+
+Este terminal registra os comandos digitados nele. Aqui está exatamente o
+que isso significa, com o nível de detalhe que eu gostaria de ter se
+estivesse do seu lado da conexão.
+
+
+O QUE É REGISTRADO
+
+    a primeira palavra da linha    `cd projects` é registrado como `cd`
+    se é um comando de verdade     que é o que separa as duas listas
+    o país                         do cabeçalho CF-IPCountry do Cloudflare
+    o horário de chegada           carimbado pelo servidor, não pelo seu relógio
+
+Isso é o registro inteiro. Uma linha do arquivo se parece com isto:
+
+    {"at":"2026-08-27T19:47:40Z","cmd":"ls","ok":true,"cc":"BR"}
+
+
+O QUE NÃO É REGISTRADO
+
+    Nenhum endereço IP.
+    Nenhum cookie. Este site não define nenhum, para nada.
+    Nenhum identificador de sessão -- nem mesmo um aleatório, que é um
+        identificador com um nome mais simpático.
+    Nada depois da primeira palavra. O que você faz com `echo` fica só com
+        você.
+    Não o seu relógio. O relógio de uma máquina oscila de um jeito próprio,
+        e essa oscilação identifica a máquina.
+
+Duas linhas da mesma pessoa são indistinguíveis de duas linhas de duas
+pessoas diferentes. Isso é proposital: é o que impede qualquer um -- eu
+inclusive -- de reconstruir uma sessão a partir do arquivo.
+
+
+PARA QUE SERVE
+
+O comando `stats`. Os comandos que as pessoas rodam, e as coisas que as
+pessoas digitaram que não são comandos aqui, que é a lista mais honesta do
+que falta neste lugar.
+
+
+PARA ONDE VAI
+
+Um arquivo JSON Lines no Raspberry Pi que está servindo esta página. Não vai
+a nenhum outro lugar. Não há script de analytics neste site, nenhum tag
+manager, e nenhum terceiro no caminho além do Cloudflare, que roteia a
+conexão e diz ao servidor de qual país ela veio.
+
+Para evitar que o endpoint de escrita seja martelado, o nginx conta as
+requisições por endereço em memória. Esse contador nunca é gravado em disco
+e desaparece quando o processo reinicia.
+
+
+O QUE FICA NO SEU NAVEGADOR
+
+Seu histórico de comandos e suas preferências -- tamanho da fonte, CRT --
+ficam no localStorage deste navegador e nunca são enviados a lugar nenhum.
+Limpar os dados deste site no seu navegador os remove. `cat ~/.bash_history`
+mostra a parte do histórico.
+
+
+O CÓDIGO
+
+    api/usage.py             o que grava o arquivo
+    src/system/telemetry.ts  o que manda isso daqui
+
+Os dois são públicos. Se este arquivo e aquele código um dia discordarem, o
+código é o que está realmente rodando, e este arquivo é um bug -- me avise.

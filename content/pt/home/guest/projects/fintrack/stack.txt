@@ -1,0 +1,7 @@
+Python
+Flask
+PostgreSQL
+JavaScript
+Chart.js
+Bootstrap
+Vercel

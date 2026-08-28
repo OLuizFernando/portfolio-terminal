@@ -11,4 +11,7 @@ vendor/
 wasm/build/
 
 # Telemetria em desenvolvimento. Em produção mora no StateDirectory do systemd.
-var/
+# A barra inicial ancora a regra na raiz: sem ela, o padrão casava também com
+# content/en/var/, e todo arquivo novo do /var simulado sumia do commit em
+# silêncio — entrava no manifesto, aparecia em dev e não chegava ao deploy.
+/var/

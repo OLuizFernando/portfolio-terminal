@@ -263,7 +263,7 @@ O que existe no lugar:
 
 Sequência, do primeiro ao último frame:
 
-1. Linhas de POST/kernel **genéricas**, com cara de `dmesg` (~8-12 linhas)
+1. Linhas de POST/kernel com cara de `dmesg` (8 linhas)
 2. Banner ASCII — **ANSI Shadow**, vindo de `art/banner.txt`
 3. Bloco de sistema com **dados reais** (modelo do Pi, kernel, uptime, temperatura)
 4. Linha de boas-vindas curta
@@ -272,7 +272,22 @@ Sequência, do primeiro ao último frame:
 6. `--help` curto
 7. Prompt
 
-**Duração:** medida em **2,1s** até o prompt (`npm test` trava a faixa em 1,5-4,5s).
+**As linhas de POST não carregam número que se leia como estado da máquina.**
+Elas eram doze e viraram oito: saíram `efi:`, `devtmpfs:`, `clocksource:` e
+`loop:`, que não dizem nada a ninguém, e saiu sobretudo um
+`Memory: 8050688K/8388608K available` fixo. Aquele número era lido como leitura
+real, não batia com o total que o `free` mostra dois blocos abaixo, e bastava
+recarregar a página duas vezes para concluir — errado — que o resto também era
+inventado. O que sobrou é verdade sobre o Pi (modelo, quatro núcleos, arm64,
+nginx, a API) e não finge medir nada. Número vivo só no item 3, que vem do
+`/api/stats`.
+
+**O POST também cobre a latência do `/api/stats`.** A busca começa junto com a
+primeira linha e o item 3 a espera; hoje são 8 × 70ms = 560ms de texto correndo
+contra ~100ms de rede. Encurtar mais este bloco é gastar essa folga — não quebra
+nada (sem resposta o item 3 degrada), mas a espera passa a aparecer.
+
+**Duração:** medida em **1,6s** até o prompt (`npm test` trava a faixa em 1,5-4,5s).
 Ficou abaixo dos 3-4s previstos de propósito: com a sequência montada, quatro
 segundos antes de poder digitar são longos demais, e quem já viu tem a tecla de
 pular. Qualquer tecla salta para o fim — e o teste confere que o texto pulado é

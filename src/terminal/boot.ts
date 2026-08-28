@@ -13,16 +13,17 @@ import art from '../generated/art.json';
 import { human, uptimeLong } from '../system/format';
 import { SystemOffline, type SystemClient, type Stats } from '../system/stats';
 
-/** Linhas de kernel, no formato do `dmesg`. Genéricas de propósito. */
+/**
+ * Linhas de kernel, no formato do `dmesg`. Todas dizem a verdade sobre o Pi, e
+ * nenhuma carrega número que se leia como estado vivo da máquina: memória e
+ * temperatura só aparecem no bloco de sistema, que vem do /api/stats. Um
+ * `Memory: ...K available` fixo aqui é lido como leitura real, contradiz o
+ * `free` na mesma tela e faz o visitante achar que o site inteiro é cenário.
+ */
 const POST: [number, string][] = [
   [0.0, 'Booting Linux on physical CPU 0x0000000000 [0x414fd0b1]'],
   [0.0, 'Machine model: Raspberry Pi 5 Model B'],
-  [0.0, 'efi: UEFI not found.'],
-  [0.132, 'Memory: 8050688K/8388608K available'],
   [0.418, 'SMP: Total of 4 processors activated.'],
-  [0.774, 'devtmpfs: initialized'],
-  [1.204, 'clocksource: arch_sys_counter: mask 0xffffffffffffff'],
-  [1.688, 'loop: module loaded'],
   [2.031, 'sdhci: Secure Digital Host Controller Interface driver'],
   [2.455, 'systemd[1]: Detected architecture arm64.'],
   [3.017, 'Started nginx - A high performance web server.'],

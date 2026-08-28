@@ -59,7 +59,7 @@ done
 emcc "${CFLAGS[@]}" -c "$ROOT/wasm/doomgeneric_wasm.c" -o "$BUILD/doomgeneric_wasm.o"
 OBJS+=("$BUILD/doomgeneric_wasm.o")
 
-EXPORTS='["_main","_dg_start","_dg_tick","_dg_set_grid","_dg_cells","_dg_cols","_dg_rows","_dg_take_frame","_dg_key","_dg_clock","_dg_render","_dg_ansi","_dg_set_origin","_dg_invalidate","_dg_set_deadband"]'
+EXPORTS='["_main","_dg_start","_dg_tick","_dg_set_grid","_dg_cells","_dg_cols","_dg_rows","_dg_take_frame","_dg_key","_dg_clock","_dg_render","_dg_ansi","_dg_set_origin","_dg_invalidate","_dg_set_deadband","_dg_set_color"]'
 
 echo "[doom] linkando..."
 emcc "${CFLAGS[@]}" "${OBJS[@]}" -o "$OUT/doom.js" \

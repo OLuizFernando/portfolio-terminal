@@ -9,6 +9,7 @@ interface DoomModule {
   _dg_tick(): void;
   _dg_clock(): number;
   _dg_set_grid(cols: number, rows: number): void;
+  _dg_set_color(on: number): void;
   _dg_set_origin(col: number, row: number): void;
   _dg_take_frame(): number;
   _dg_render(): number;
@@ -72,6 +73,8 @@ export interface DoomOptions {
   showFps: boolean;
   /** Tamanho de fonte só durante o jogo. Sem isso, usa a do terminal. */
   fontSize?: number | undefined;
+  /** Pinta o frame na paleta de 256 do terminal. Desligado, sai a rampa de sempre. */
+  color?: boolean | undefined;
 }
 
 export interface DoomResult {
@@ -125,6 +128,10 @@ export async function runDoom(term: TerminalControl, options: DoomOptions): Prom
     term.write('\x1b[2J');
     doom._dg_invalidate();
   }
+
+  // Antes do layout: `dg_set_grid` já zera os acumuladores de cor, e assim a
+  // primeira grade nasce no modo certo em vez de trocar no frame seguinte.
+  doom._dg_set_color(options.color ? 1 : 0);
 
   layout();
   doom._dg_start();
@@ -251,8 +258,10 @@ export async function runDoom(term: TerminalControl, options: DoomOptions): Prom
       const fps = (fpsFrames * 1000) / (now - fpsSince);
       fpsFrames = 0;
       fpsSince = now;
+      // O `\x1b[0m` na frente é o que impede o HUD de sair pintado com a cor da
+      // última célula do frame quando `--color` está ligado.
       term.write(
-        `\x1b[${termRows};1H\x1b[K` +
+        `\x1b[0m\x1b[${termRows};1H\x1b[K` +
           t().doomHud(
             fixed(fps, 1),
             grid.cols,

@@ -13,7 +13,7 @@ function hasKeyboard(): boolean {
 const doom: CommandSpec = {
   name: 'doom',
   summary: 'play DOOM',
-  usage: 'doom [--fps] [--font=<px>]',
+  usage: 'doom [--color] [--fps] [--font=<px>]',
   man:
     'Runs DOOM inside this terminal. Not in a canvas on top of it: the frames\n' +
     'are drawn as characters in the same text grid you are typing into.\n\n' +
@@ -23,8 +23,14 @@ const doom: CommandSpec = {
     '  shift           run\n' +
     '  esc             menu\n' +
     '  ctrl+c          quit back to the shell\n\n' +
+    '  --color         paint the frame instead of drawing it in grey\n' +
     '  --fps           show frame rate and timings while playing\n' +
     `  --font=<px>     character size while playing, ${MIN_FONT_SIZE} to ${MAX_FONT_SIZE}\n\n` +
+    'This terminal is white on black, and DOOM follows it: the picture is drawn\n' +
+    'with a ramp of characters, from sparse to dense, and brightness is the only\n' +
+    'thing that survives. --color keeps that ramp and adds the hue on top, so the\n' +
+    'blood is red and the sky is not. It costs more bytes per frame, which is why\n' +
+    'it is not the default.\n\n' +
     'By default the picture uses the grid your terminal already has, so a bigger\n' +
     'window means a sharper DOOM. A smaller --font packs in more characters for a\n' +
     'sharper picture, at the cost of more drawing per frame. If it starts to\n' +
@@ -42,6 +48,11 @@ const doom: CommandSpec = {
     for (const arg of argv.slice(1)) {
       if (arg === '--fps') {
         options.showFps = true;
+        continue;
+      }
+
+      if (arg === '--color') {
+        options.color = true;
         continue;
       }
 

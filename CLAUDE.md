@@ -150,6 +150,17 @@ Cada uma destas já custou tempo. Não as reintroduza.
     O separador decimal é do idioma: `7.9Gi` em inglês, `7,9Gi` em português. As
     duas exceções são de propósito — os carimbos do POST do boot, que são do
     kernel, e nada em `src/doom/` fora do HUD do `--fps`.
+27. **No `dg_render`, a cor tem que ser reafirmada depois de cada salto de
+    cursor.** O emissor pula os trechos que não mudaram e salta o cursor para o
+    próximo; o SGR que vale no destino do salto é o que o trecho anterior
+    deixou, não o que este espera. Sem zerar o `emitted` no salto, o primeiro
+    trecho de cada linha sai pintado com a cor da última célula da linha
+    anterior — e isso só aparece como cor borrada durante a partida, nunca no
+    build. Pelo mesmo motivo o frame termina em `\x1b[0m`: o HUD do `--fps`
+    escreve por cima da imagem, e o shell reaparece na saída. A cor também tem
+    zona morta própria (`g_color_deadband`), pela mesma razão que a luminância
+    tem — zerá-la custa 10KB por quadro numa cena parada, redesenhando o que
+    não mudou.
 
 ## Adicionar um comando
 

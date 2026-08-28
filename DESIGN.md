@@ -59,11 +59,25 @@ de contar colunas, como no `ls` de verdade.
 
 | Decisão                        | Escolha                                         |
 | ------------------------------ | ----------------------------------------------- |
-| Paleta                         | **Branco puro sobre preto.** Sem cores.         |
+| Paleta                         | **Branco puro sobre preto.** Sem cores no shell. |
 | Destaques                      | **Negrito**, e só                               |
 | Fonte                          | JetBrains Mono                                  |
 | Efeitos (CRT, scanlines, glow) | **Desligados por padrão**, ligáveis por comando |
 | Boot                           | Streaming linha a linha                         |
+
+**Nota sobre a cor** (revisto em 2026-08-28): a decisão acima vale para o shell, e
+vale inteira. Nenhum comando pinta a saída — nem `ls`, nem erro, nem cabeçalho de
+tabela. Cor existe em exatamente dois lugares, os dois dentro do buffer
+alternativo, os dois pedidos pelo visitante: o `matrix`, que é verde porque é a
+piada, e o `doom --color`, **desligado por padrão**. É a linha "efeitos" da tabela,
+não uma exceção à linha "paleta".
+
+Foi considerado e recusado levar cor ao shell (realce de diretório no `ls`, erro em
+vermelho, `[ OK ]` verde no boot). Três coisas se apoiam na monocromia e cairiam
+junto: a barra final do `ls` existe porque não há cor para distinguir diretório
+(`src/commands/format.ts`), a fonte só embarca Regular e Bold porque negrito é o
+único destaque, e as 154 asserções de saída dos testes são texto cru. Não é que
+não dê — é que o preço não é o que parece de fora.
 
 **Nota sobre a fonte:** a JetBrains Mono é aberta (OFL) e está no Google Fonts, mas
 deve ser **auto-hospedada** — o Pi já serve os estáticos e o Cloudflare cacheia na
@@ -454,8 +468,24 @@ navegador estrangula o `requestAnimationFrame` de aba oculta. O HUD do
 - Compilado a **320x200** — o doomgeneric faria um upscale para 640x400 que a
   reamostragem jogaria fora em seguida.
 - O backend reamostra em caixa para a grade do terminal e mapeia luminância
-  (Rec.601) numa rampa de densidade de 23 caracteres. Como a paleta é branco
-  puro, luminância é a única informação que sobreviveria de qualquer forma.
+  (Rec.601) numa rampa de densidade de 23 caracteres. Por padrão a luminância é
+  a única informação que sobrevive, que é a que a rampa carrega.
+- **Cor é opcional, e sai por `doom --color`** (feito em 2026-08-28). A rampa
+  continua a mesma e carrega a luminância; a cor entra por cima, carregando só a
+  matiz, num índice da paleta de 256 do xterm por célula. Escolhido o cubo 6×6×6
+  em vez de truecolor porque quantizar **é** uma zona morta: índices iguais
+  alongam os trechos de cor constante, então menos precisão custa menos bytes e
+  rende trechos maiores — as duas coisas na mesma direção. As 24 entradas de
+  cinza entram na escolha junto com o cubo, decidida por erro quadrático, porque
+  pedra e sombra são boa parte da tela e é onde o cubo erra mais.
+- **A cor tem zona morta própria**, pelo mesmo motivo que a luminância tem. Sem
+  ela, uma cena parada com tremor de ±6 níveis custa 10KB por quadro para não
+  mudar nada na tela; de 8 para cima o custo é zero. Está em 24, metade de um
+  degrau do cubo.
+- **Custo medido** (grade 160×48, fora do navegador): +6% de bytes por quadro em
+  cena chapada, +41% em gradiente. Ruído por pixel chega a +966%, mas não é o
+  DOOM: textura tem coerência espacial. O número real de uma partida sai no
+  `doom --fps --color`.
 - **O laço mora no JS**, não no C: sem `emscripten_set_main_loop`, sem asyncify.
   O navegador nunca perde o controle do frame.
 - **Buffer alternativo de tela** (`\x1b[?1049h`), como qualquer programa de

@@ -139,7 +139,7 @@ export const ptDocs: Record<string, CommandDocs> = {
 
   doom: {
     summary: "jogar DOOM",
-    usage: "doom [--fps] [--font=<px>]",
+    usage: "doom [--color] [--fps] [--font=<px>]",
     man:
       "Roda o DOOM dentro deste terminal. Não num canvas por cima dele: os\n" +
       "quadros são desenhados como caracteres na mesma grade de texto em que\n" +
@@ -150,8 +150,14 @@ export const ptDocs: Record<string, CommandDocs> = {
       "  shift           corre\n" +
       "  esc             menu\n" +
       "  ctrl+c          sai de volta para o shell\n\n" +
+      "  --color         pinta o quadro em vez de desenhá-lo em cinza\n" +
       "  --fps           mostra taxa de quadros e tempos enquanto joga\n" +
       "  --font=<px>     tamanho do caractere no jogo, de 4 a 24\n\n" +
+      "Este terminal é branco no preto, e o DOOM segue ele: a imagem é desenhada\n" +
+      "com uma rampa de caracteres, do esparso ao denso, e o brilho é a única\n" +
+      "coisa que sobrevive. O --color mantém essa rampa e põe a matiz por cima,\n" +
+      "então o sangue fica vermelho e o céu não. Custa mais bytes por quadro, e é\n" +
+      "por isso que não é o padrão.\n\n" +
       "Por padrão a imagem usa a grade que o seu terminal já tem, então janela\n" +
       "maior é DOOM mais nítido. Um --font menor empacota mais caracteres e dá\n" +
       "imagem mais nítida, ao custo de mais desenho por quadro. Se começar a\n" +

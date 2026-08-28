@@ -198,8 +198,8 @@ function main(): void {
   handle.term.focus();
 
   // O navegador é consultado uma vez, só para decidir se vale oferecer. Quem
-  // troca é o visitante (DESIGN.md 2.6): detecção automática tiraria dele a
-  // agência que é a alma do projeto.
+  // troca é o visitante: detecção automática tiraria dele a agência que é a alma
+  // do projeto.
   const speaksPt = navigator.language?.toLowerCase().startsWith('pt') ?? false;
   const langHint =
     speaksPt && LANGS.includes('pt') && env.lang !== 'pt'

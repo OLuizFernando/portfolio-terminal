@@ -3,10 +3,15 @@
 Portfólio pessoal no formato de um terminal Unix simulado. Não tem UI — tem um
 shell, e o site inteiro se navega por comandos.
 
-**`DESIGN.md` é a fonte da verdade.** Conceito, decisões fechadas, escopo,
-arquitetura, mapa do repositório e plano de fases estão lá. Leia antes de propor
-mudança de rumo, e atualize quando uma decisão mudar — o documento acompanha o
-código no mesmo commit.
+**Este arquivo é a fonte da verdade do que não está no código.** Convenções,
+decisões fechadas e as armadilhas que já custaram tempo moram aqui. Leia antes de
+propor mudança de rumo, e atualize quando uma decisão mudar — o documento
+acompanha o código no mesmo commit.
+
+O `DESIGN.md`, que guardava o conceito e o porquê de cada decisão por extenso,
+foi removido do repositório. Ele continua no histórico:
+`git log --diff-filter=D --name-only -- DESIGN.md` acha o commit que o apagou, e
+`git show <commit>^:DESIGN.md` devolve o texto inteiro.
 
 ## Comandos
 
@@ -38,7 +43,13 @@ artefatos vivem versionados em `public/doom/`.
 - Código, identificadores e mensagens de commit: **inglês**.
 - Saída do terminal: escrita em **inglês**, no código, e traduzida por cima em
   `src/i18n/`. O inglês é a fonte; o português é catálogo.
-- Comentários e documentação: **português**.
+- Comentários e documentação interna: **português**. Este arquivo é português.
+- **O `README.md` é a exceção, e é em inglês.** Ele não é documentação interna: é
+  a porta de entrada de quem chega pelo GitHub, e quem chega ali chega pelo site,
+  que é em inglês — o próprio COLOPHON publica a URL do repositório. Ele descreve
+  o projeto de fora; este arquivo explica as decisões por dentro, e é nele que
+  mudança de rumo se registra. Ao mexer em comando, script do `package.json` ou
+  layout do repositório, confira se o README ainda diz a verdade.
 - Comentário explica *por quê*. O *o quê* já está no código.
 
 ## Git
@@ -199,5 +210,6 @@ lá diz de onde ela vem e por que não é a do Google Fonts.
 
 Raspberry Pi 5 (8GB), nginx na porta 8080 servindo `dist/` e fazendo proxy de `/api`
 para o uvicorn em 127.0.0.1:8000, tudo atrás de Cloudflare Tunnel. Os arquivos
-prontos estão em `deploy/`. Deploy é manual e por decisão registrada não há CI
-(`DESIGN.md` §4).
+prontos estão em `deploy/`. Deploy é manual e não há CI: um webhook precisaria
+alcançar o Pi de fora, e a razão de existir do Cloudflare Tunnel é justamente não
+haver porta aberta no roteador.

@@ -427,6 +427,19 @@ Duas consequências aceitas:
    alguém digita `doom`) + cache agressivo. O cache de borda do Cloudflare absorve
    isso, protegendo o upload da conexão residencial.
 
+   **Custo desse cache, cobrado em 2026-08-28:** os três arquivos têm nome fixo,
+   e o `expires 30d` os tratava como imutáveis. Ao recompilar o wasm, o
+   Cloudflare serviu o `doom.js` velho de cache enquanto entregava o `doom.wasm`
+   novo da origem — porque ele cacheia `.js` por padrão e `.wasm` não. O par
+   desencontrado morre em `_dg_set_color is not a function`: o símbolo existe no
+   wasm e não existe no loader. Purgar a borda conserta o visitante novo e **não
+   alcança quem já tem o arquivo no navegador**, que o guardou pelos mesmos 30
+   dias. Por isso a URL passou a carregar `?v=<hash dos artefatos>`, posto pelo
+   `src/doom/runtime.ts` no `MODULE_PATH` **e** no `locateFile`. Como o
+   `index.html` é `no-cache` e o bundle tem hash, o visitante recebe o JS novo na
+   primeira visita, e ele aponta para uma URL que o cache local nunca viu — que é
+   o único caminho até um navegador já envenenado.
+
 Plano de contingência, se a performance não fechar: canvas sobreposto com js-dos.
 
 **Resultado do spike (fase 2, 2026-08-27): funcionou. O plano de contingência

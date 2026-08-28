@@ -1,6 +1,7 @@
 import { fixed, t } from '../i18n';
 import type { TerminalControl } from '../commands/types';
 import { toDoomKey } from './keymap';
+import doomBuild from '../generated/doom.json';
 
 /** Superfície do módulo Emscripten que a gente realmente usa. */
 interface DoomModule {
@@ -23,7 +24,19 @@ type DoomFactory = (options?: Record<string, unknown>) => Promise<DoomModule>;
 /** O DOOM é 320x200 exibido em 4:3. */
 const IMAGE_ASPECT = 4 / 3;
 
-const MODULE_PATH = '/doom/doom.js';
+/*
+ * Os três arquivos em /doom/ têm nome fixo e são cacheados por 30 dias, então a
+ * versão vai na query: sem ela a URL não muda quando o wasm é recompilado, e o
+ * visitante que já jogou continua recebendo o loader velho do cache do próprio
+ * navegador — que nenhum purge de CDN alcança.
+ *
+ * Vale para o doom.js E para o que o locateFile resolve. Versionar só o loader
+ * deixaria o .wasm e o .data nas URLs antigas, que é o desencontro entre loader
+ * e wasm que isto existe para impedir.
+ */
+const VERSION = `?v=${doomBuild.version}`;
+
+const MODULE_PATH = `/doom/doom.js${VERSION}`;
 
 /** Teto da grade no backend em C. Espelhado aqui para os dois lados concordarem. */
 const MAX_GRID_COLS = 400;
@@ -97,7 +110,7 @@ export async function runDoom(term: TerminalControl, options: DoomOptions): Prom
   const factory = await loadFactory();
   // `locateFile` é obrigatório: sem ele o emscripten busca o doom.data relativo
   // à página, não ao módulo, e recebe de volta o index.html do servidor.
-  const doom = await factory({ locateFile: (path: string) => `/doom/${path}` });
+  const doom = await factory({ locateFile: (path: string) => `/doom/${path}${VERSION}` });
 
   // Por padrão o DOOM joga na fonte do terminal. `--font` encolhe só durante a
   // partida: como tudo acontece no buffer alternativo, o shell nunca vê a troca.

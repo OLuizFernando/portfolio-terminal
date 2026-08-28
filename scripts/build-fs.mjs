@@ -7,6 +7,7 @@
  * cai no mtime do disco.
  */
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -124,3 +125,33 @@ const shapes = Object.entries(art)
   .map(([name, lines]) => `${name} ${Math.max(0, ...lines.map((l) => [...l].length))}x${lines.length}`)
   .join(', ');
 console.log(`[build-fs] arte: ${shapes || 'nenhuma'} → src/generated/art.json`);
+
+/**
+ * Hash dos artefatos do DOOM → src/generated/doom.json.
+ *
+ * Os três arquivos de public/doom/ têm nome fixo e conteúdo que muda a cada
+ * recompilação do wasm. Sem nada que diferencie as versões, o cache de 30 dias
+ * do nginx e do Cloudflare serve o loader velho junto do wasm novo — e como o
+ * Cloudflare cacheia .js mas não .wasm, o par chega desencontrado e o jogo
+ * morre num export que existe no wasm e não existe no loader.
+ *
+ * O hash entra na query das URLs em src/doom/runtime.ts, então a URL muda com o
+ * conteúdo e os 30 dias passam a estar corretos. É lido dos bytes já versionados
+ * em public/doom/, não da compilação: quem não tem emsdk também gera isto.
+ */
+const doomDir = path.join(root, 'public', 'doom');
+const doomFiles = ['doom.js', 'doom.wasm', 'doom.data'];
+const digest = createHash('sha256');
+
+for (const name of doomFiles) {
+  const file = path.join(doomDir, name);
+  // Artefato ausente não é erro: dá para desenvolver o resto do site sem ter
+  // compilado o DOOM. O nome entra no hash de qualquer jeito, para que passar a
+  // ter o arquivo já mude a versão.
+  digest.update(name);
+  if (fs.existsSync(file)) digest.update(fs.readFileSync(file));
+}
+
+const doomVersion = digest.digest('hex').slice(0, 12);
+fs.writeFileSync(path.join(outDir, 'doom.json'), JSON.stringify({ version: doomVersion }));
+console.log(`[build-fs] doom: ${doomVersion} → src/generated/doom.json`);

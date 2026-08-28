@@ -66,6 +66,11 @@ function main(): void {
   let alive = true;
 
   const syncBashHistory = () => {
+    // Depois de um `rm -rf /` o home não existe mais, e o `writeFile` recriaria
+    // o diretório inteiro só para guardar o histórico — ressuscitando por baixo
+    // do pano justamente o que o visitante acabou de apagar. O `reboot` remonta
+    // a árvore antes de chamar isto, então o histórico volta com ela.
+    if (!vfs.isDir(env.home)) return;
     vfs.writeFile(`${env.home}/.bash_history`, env.history.map((line) => line + '\n').join(''), false, true);
   };
   syncBashHistory();
@@ -91,6 +96,34 @@ function main(): void {
     },
   };
 
+  // Trocar a árvore leva junto o que não veio do manifesto: `/usr/bin`, o
+  // `/proc` e o `~/.bash_history` são montados por cima e precisam ser refeitos,
+  // ou o `lang` deixaria o visitante sem comandos e sem histórico.
+  const remount = (lang: string) => {
+    vfs.remount(mount(lang));
+    mountUsrBin(vfs, registry);
+    mountProc(vfs);
+    syncBashHistory();
+  };
+
+  // O boot roda duas vezes: quando a página abre e quando o `reboot` pede. A
+  // dica de idioma só na primeira — na segunda o visitante já escolheu.
+  const boot = (hint?: string) =>
+    runBoot({
+      langHint: hint,
+      output: {
+        print: (text) => handle.print(text),
+        get cols() {
+          return handle.term.cols;
+        },
+      },
+      system,
+      onSkippable: (skip) => {
+        const listener = handle.term.onData(skip);
+        return () => listener.dispose();
+      },
+    });
+
   const ctx: ShellContext = {
     vfs,
     env,
@@ -99,14 +132,15 @@ function main(): void {
     system,
     savePrefs: () => savePrefs({ lang: env.lang, fontSize: env.fontSize, crt: env.crt }),
     langs: LANGS,
-    // Trocar a árvore leva junto o que não veio do manifesto: `/usr/bin`, o
-    // `/proc` e o `~/.bash_history` são montados por cima e precisam ser
-    // refeitos, ou o `lang` deixaria o visitante sem comandos e sem histórico.
-    remount: (lang) => {
-      vfs.remount(mount(lang));
-      mountUsrBin(vfs, registry);
-      mountProc(vfs);
-      syncBashHistory();
+    remount,
+    reboot: async () => {
+      remount(env.lang);
+      env.cwd = env.home;
+      env.oldcwd = env.home;
+      // `3J` leva a rolagem junto: reiniciar e deixar o cadáver da sessão
+      // anterior rolável acima do boot não seria reiniciar coisa nenhuma.
+      handle.term.write('\x1b[2J\x1b[3J\x1b[H');
+      await boot();
     },
   };
 
@@ -168,20 +202,7 @@ function main(): void {
       ? "dica: execute 'lang pt' para português"
       : undefined;
 
-  void runBoot({
-    langHint,
-    output: {
-      print: (text) => handle.print(text),
-      get cols() {
-        return handle.term.cols;
-      },
-    },
-    system,
-    onSkippable: (skip) => {
-      const listener = handle.term.onData(skip);
-      return () => listener.dispose();
-    },
-  }).finally(() => {
+  void boot(langHint).finally(() => {
     booting = false;
     editor.start();
   });

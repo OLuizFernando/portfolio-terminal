@@ -96,6 +96,28 @@ export class Vfs {
     parent.children[name] = file;
   }
 
+  /**
+   * Apaga um nó da árvore. Devolve `false` quando não havia nada ali.
+   *
+   * Apagar `/` é esvaziar `/`, não sumir com ele — é o que o `rm -rf /` de
+   * verdade faz, porque a raiz é um ponto de montagem e continua montada
+   * depois de perder tudo que tinha dentro.
+   */
+  remove(path: string): boolean {
+    const norm = normalize(path);
+    if (norm === '/') {
+      this.root.children = {};
+      return true;
+    }
+
+    const parent = this.lookup(dirname(norm));
+    const name = basename(norm);
+    if (parent?.kind !== 'dir' || !(name in parent.children)) return false;
+
+    delete parent.children[name];
+    return true;
+  }
+
   /** Caminhos de todos os arquivos e diretórios sob `path`, em profundidade. */
   walk(path: string, all = false): string[] {
     const out: string[] = [];

@@ -46,6 +46,14 @@ export interface ShellContext {
    * junto com a árvore antiga.
    */
   remount(lang: string): void;
+  /**
+   * Reinicia a sessão: remonta a árvore do idioma atual, volta para o home e
+   * roda a sequência de boot de novo.
+   *
+   * É o caminho de volta do `rm -rf /`, e o único caminho de volta que não
+   * exige recarregar a página.
+   */
+  reboot(): Promise<void>;
 }
 
 export interface CommandResult {
@@ -59,6 +67,14 @@ export interface Invocation {
   stdin: string;
   /** A saída vai para um pipe ou arquivo, não para a tela. */
   piped: boolean;
+  /**
+   * O comando foi chamado através do `sudo`.
+   *
+   * O executor sempre passa `false`: quem levanta é o próprio `sudo`, ao
+   * despachar o resto do argv. Um comando que não olha para isto roda igual
+   * com e sem privilégio, que é como o sudo se comporta de verdade.
+   */
+  sudo: boolean;
   ctx: ShellContext;
 }
 

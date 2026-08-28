@@ -113,13 +113,27 @@ Cada uma destas já custou tempo. Não as reintroduza.
     `/proc` e o `~/.bash_history` não vêm do manifesto — são escritos por cima
     depois. Trocar a árvore pelo `lang` sem refazer os três deixa `ls /usr/bin`
     vazio e o histórico do visitante inacessível. Quem centraliza isso é o
-    `remount` do `ShellContext`, em `src/main.ts`.
+    `remount` do `main.ts` — e ele serve tanto o `lang` quanto o `reboot`,
+    que remonta pelo mesmo caminho. Pelo mesmo motivo, o `syncBashHistory`
+    desiste quando o home não existe: um `writeFile` ali recriaria o diretório
+    inteiro no comando seguinte a um `rm -rf /`, ressuscitando o que o visitante
+    acabou de apagar. Isso não aparece no `npm test`, que não tem histórico.
 20. **Os nomes de arquivo são iguais em `content/en/` e `content/pt/`.** É o que
     permite o `lang` preservar o diretório atual. Traduzir um nome de caminho
     manda o visitante de volta para o home toda vez que ele troca de idioma.
 21. **A telemetria guarda a primeira palavra e nada mais**, e o `/etc/privacy`
     promete isso por escrito. Mudar o que `src/system/telemetry.ts` manda sem
     mudar o arquivo transforma o texto numa mentira publicada.
+22. **O `/RECOVERY.txt` é a única saída do `rm -rf /`** que não passa por
+    recarregar a página, e a única pista dele é a última linha que o `rm`
+    imprime: a reclamação de não ter conseguido removê-lo. Ela é a última porque
+    o arquivo é escrito **depois** da varredura — escrevê-lo antes o joga para o
+    meio de oitenta linhas de `removed '<path>'`, onde ninguém o lê, e deixa o
+    visitante sem caminho de volta. Pelo `rm -rf /*` essa linha não sai, e é de
+    propósito: o glob fechou a lista antes de o arquivo existir, e o `rm` varre
+    só os caminhos que recebeu.
+23. **O bloco de apagamento é o último do `test/shell.test.ts`.** Ele derruba a
+    árvore de verdade; teste escrito depois dele roda num sistema vazio.
 
 ## Adicionar um comando
 

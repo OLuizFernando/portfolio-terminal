@@ -30,6 +30,14 @@ mountProc(vfs);
 
 const env = new Env();
 
+// Espelha o que o main faz: a árvore nova não traz /usr/bin nem /proc, que são
+// montados por cima. Sem refazê-los aqui, o teste não veria a regressão.
+const remount = (lang: string) => {
+  vfs.remount(structuredClone(langs[lang] as DirNode));
+  mountUsrBin(vfs, registry);
+  mountProc(vfs);
+};
+
 /** Registra o que o comando pediu ao terminal, para os testes conferirem. */
 const terminal = { fontSize: env.fontSize, prefsSalvas: 0, crt: false };
 
@@ -46,12 +54,13 @@ const ctx: ShellContext = {
     terminal.prefsSalvas++;
   },
   langs: Object.keys(langs),
-  // Espelha o que o main faz: a árvore nova não traz /usr/bin nem /proc, que
-  // são montados por cima. Sem refazê-los aqui, o teste não veria a regressão.
-  remount: (lang) => {
-    vfs.remount(structuredClone(langs[lang] as DirNode));
-    mountUsrBin(vfs, registry);
-    mountProc(vfs);
+  remount,
+  // O `reboot` de verdade também limpa a tela e roda o boot de novo; aqui só
+  // interessa o que o comando promete ao filesystem e ao cwd.
+  reboot: async () => {
+    remount(env.lang);
+    env.cwd = env.home;
+    env.oldcwd = env.home;
   },
   term: {
     clear: () => {},
@@ -94,7 +103,8 @@ await check('pwd', (o) => o === '/home/guest\n');
 await check('ls', has('README.txt', 'projects/', 'experience/'));
 await check('ls', lacks('.secret'));
 await check('ls -a', has('.secret', './', '../'));
-await check('ls -l', has('-rw-r--r--', 'guest'));
+// Dono root em tudo: é o que dá razão ao `Permission denied` do `rm`.
+await check('ls -l', has('-rw-r--r--', 'root root'));
 await check('cat README.txt', has('There is no interface'));
 await check('cat nope.txt', has("cat: nope.txt: No such file or directory"));
 await check('cd projects && pwd', (o) => o === '/home/guest/projects\n');
@@ -294,18 +304,32 @@ count++;
 
 // --- Camada 4: personalidade ----------------------------------------------
 
-await check('sudo rm -rf /', has('guest is not in the sudoers file'), 'sudo: incidente reportado');
+// O `sudo` não é piada: ele troca o privilégio e despacha o resto do argv.
 await check('sudo', has('usage: sudo'));
+await check('sudo whoami', (o) => o === 'guest\n', 'sudo despacha o comando de verdade');
+await check('sudo nada', has('sudo: nada: command not found'));
 
 // A recusa do `-rf /` é a do coreutils de verdade, e a flag que a destrava
-// também.
+// também. Nem o sudo passa por cima dela.
 await check('rm -rf /', has('dangerous to operate recursively', '--no-preserve-root'));
-await check('rm about.txt', has('Operation not permitted'));
+await check('sudo rm -rf /', has('dangerous to operate recursively'), 'nem o root pula o failsafe');
 await check('rm', has('missing operand'));
+
+// Toda a árvore é do root — o `ls -l` diz isso — então o visitante esbarra em
+// permissão antes de esbarrar em qualquer outra coisa.
+await check('rm /home/guest/about.txt', has("cannot remove '/home/guest/about.txt': Permission denied"));
+await check('rm /nao-existe', has('No such file or directory'));
+await check('rm -f /nao-existe', (o) => o === '', 'rm -f cala sobre o que não existe');
+await check('rm /etc', has("cannot remove '/etc': Is a directory"));
+await check('sudo rm /RECOVERY.txt', has('No such file or directory'), 'o sobrevivente só existe depois');
+
+// Apagar de verdade, e o arquivo voltar: o `>` já provava que a árvore aceita
+// escrita, e o `rm` com privilégio é a outra metade disso.
+await check('echo oi > /tmp-teste.txt', (o) => o === '' && vfs.exists('/tmp-teste.txt'));
 await check(
-  'rm -rf --no-preserve-root / | tail -n 3',
-  has('Just kidding'),
-  'rm --no-preserve-root: apaga tudo e devolve tudo',
+  'sudo rm /tmp-teste.txt',
+  (o) => o === '' && !vfs.exists('/tmp-teste.txt'),
+  'sudo rm apaga o arquivo de verdade',
 );
 
 await check('fortune', (o) => o.trim().length > 10);
@@ -493,6 +517,61 @@ env.cwd = '/home/guest/nao-existe';
 await check('lang en', (o) => o === 'en\n' && env.cwd === env.home, 'lang: cwd órfão cai no home');
 
 env.cwd = env.home;
+
+// --- O apagamento, e a volta ----------------------------------------------
+//
+// Fica por último de propósito: este bloco derruba a árvore de verdade, e todo
+// teste acima dele conta com ela de pé.
+
+await check(
+  'rm -rf --no-preserve-root /',
+  (o) => has("cannot remove '/etc': Permission denied")(o) && vfs.exists('/home/guest'),
+  'rm -rf / sem sudo não leva nada',
+);
+
+// O `/*` passa por fora do failsafe porque o glob já entregou os filhos — e pela
+// mesma razão o `rm` não reclama do RECOVERY.txt, que só passou a existir depois
+// de a lista estar fechada. O arquivo fica lá para quem der `ls /`.
+await check(
+  'sudo rm -rf /* | cat',
+  (o) => !o.includes('RECOVERY') && vfs.isFile('/RECOVERY.txt') && !vfs.exists('/home'),
+  'sudo rm -rf /*: apaga sem falar de arquivo que ninguém pediu',
+);
+await check('reboot', (o) => o === '' && vfs.exists('/home/guest'), 'reboot depois do /*');
+
+// O que o visitante vê é o que sumiu, um caminho por linha e todos de verdade —
+// silêncio aqui não passa a impressão de nada acontecendo, passa a de nada ter
+// acontecido. Na pipe as linhas saem sem a cadência (armadilha 6).
+{
+  const antes = vfs.walk('/', true).length;
+  await check(
+    'sudo rm -rf --no-preserve-root / | wc -l',
+    // A recusa vem junto na saída, em stderr: o número é a última linha.
+    (o) => Number(o.trim().split('\n').pop()) === antes - 1,
+    'sudo rm -rf /: uma linha por caminho que existia, menos a raiz',
+  );
+}
+
+// Apagar de novo o que já foi apagado encontra o sobrevivente do primeiro
+// apagamento — e a única resposta certa sobre ele é a recusa, nunca um
+// `removed` seguido de um `cannot remove` do mesmo caminho.
+await check(
+  'sudo rm -rf --no-preserve-root / | wc -l',
+  (o) => has("rm: cannot remove '/RECOVERY.txt'")(o) && Number(o.trim().split('\n').pop()) === 0,
+  'apagar duas vezes não remove o sobrevivente',
+);
+
+await check('ls /', (o) => o.trim() === 'RECOVERY.txt', 'do apagamento sobra só o RECOVERY.txt');
+await check('ls', has("cannot access '.'"), 'o home sumiu debaixo do visitante, e o shell segue de pé');
+await check('help --all', has('reboot'), 'os comandos nunca estiveram no disco');
+await check('cat /RECOVERY.txt', has('and it ran', 'reboot'), 'o sobrevivente diz como voltar');
+
+await check('reboot | wc -l', has('cannot write to a pipe'));
+await check(
+  'reboot',
+  (o) => o === '' && vfs.exists('/home/guest/about.txt') && !vfs.exists('/RECOVERY.txt'),
+  'reboot: a árvore volta inteira, e o sobrevivente vai junto',
+);
 
 console.log(`\n${count - failures}/${count} passaram`);
 if (failures > 0) process.exit(1);

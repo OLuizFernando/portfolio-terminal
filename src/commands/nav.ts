@@ -42,7 +42,9 @@ const ls: CommandSpec = {
       const sizeWidth = Math.max(0, ...sizes.map((s) => s.length));
       const lines = listing.map(
         (entry, i) =>
-          `${modeOf(entry.node)} 1 ${ctx.env.user} ${ctx.env.user} ${sizes[i]!.padStart(sizeWidth)} ` +
+          // Dono e grupo são o root, e não o visitante: é o que explica o
+          // `Permission denied` do `rm` sem precisar de nota de rodapé.
+          `${modeOf(entry.node)} 1 root root ${sizes[i]!.padStart(sizeWidth)} ` +
           `${formatDate(entry.node.mtime)} ${decorate(entry.name, entry.node.kind === 'dir')}`,
       );
       return `total ${listing.length}\n${fromLines(lines)}`;
@@ -62,7 +64,7 @@ const ls: CommandSpec = {
 
       if (node.kind === 'file') {
         chunks.push(long
-          ? `${modeOf(node)} 1 ${ctx.env.user} ${ctx.env.user} ${sizeOf(node)} ${formatDate(node.mtime)} ${target}\n`
+          ? `${modeOf(node)} 1 root root ${sizeOf(node)} ${formatDate(node.mtime)} ${target}\n`
           : `${target}\n`);
       } else {
         chunks.push(header + renderDir(path));
@@ -255,6 +257,33 @@ const exit: CommandSpec = {
   },
 };
 
+/**
+ * O `reboot`.
+ *
+ * Não pede privilégio nenhum de propósito: ele é o caminho de volta do
+ * `rm -rf /`, e trancar a saída atrás de um segundo enigma cobra do visitante
+ * sem devolver piada nenhuma. Nada aqui precisa ser protegido de um reinício —
+ * a máquina que ele reinicia é uma cópia, e é só dele.
+ */
+const reboot: CommandSpec = {
+  name: 'reboot',
+  summary: 'restart the machine',
+  usage: 'reboot',
+  man:
+    'Remounts the filesystem from scratch and runs the boot sequence again.\n\n' +
+    'Everything you wrote with `>` is lost, everything you deleted comes back,\n' +
+    'and you land at the prompt in your home directory.\n\n' +
+    'Your history, your font size and your language survive it: those live in\n' +
+    'the browser, not in the machine. Reloading the page does the same thing,\n' +
+    'and takes longer.',
+  async run({ ctx, piped }: Invocation) {
+    // Reiniciar limpa a tela e redesenha o boot. Num pipe não há tela.
+    if (piped) return fail('reboot: cannot write to a pipe\n', 2);
+    await ctx.reboot();
+    return ok();
+  },
+};
+
 const whichName = (path: string) => basename(path);
 
 const find: CommandSpec = {
@@ -308,5 +337,5 @@ const find: CommandSpec = {
   },
 };
 
-export const navCommands: CommandSpec[] = [ls, cd, pwd, cat, tree, find, clear, help, man, history, exit];
+export const navCommands: CommandSpec[] = [ls, cd, pwd, cat, tree, find, clear, help, man, history, reboot, exit];
 export { toLines };

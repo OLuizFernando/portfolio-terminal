@@ -49,7 +49,7 @@ async function runPipeline(pipeline: Pipeline, ctx: ShellContext): Promise<ExecO
     // Comandos formatam diferente quando a saída não é a tela — é o que faz
     // `ls | wc -l` contar arquivos em vez de contar colunas.
     const piped = !isLast || command.redirect !== null;
-    const result = await spec.run({ argv, stdin, piped, ctx });
+    const result = await spec.run({ argv, stdin, piped, sudo: false, ctx });
     output += result.stderr;
     code = result.code;
 

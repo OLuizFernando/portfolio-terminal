@@ -120,6 +120,8 @@ Fora da home (easter eggs):
 - `/proc/cpuinfo`, `/proc/meminfo` — **dados reais do Pi**
 - `/usr/bin/` — lista todos os comandos existentes
 - `~/.secret` — só aparece com `ls -a`
+- `/RECOVERY.txt` — não existe até alguém apagar a máquina, e é a única coisa
+  que sobra quando isso acontece (ver 2.4)
 
 **Decisões:**
 
@@ -158,7 +160,7 @@ Fora da home (easter eggs):
 
 **Camada 1 — navegação e utilidades:**
 `ls` (`-a`, `-l`), `cd`, `pwd`, `cat`, `tree`, `clear`, `help`, `man <cmd>`,
-`history`, `font`, `exit`
+`history`, `font`, `reboot`, `exit`
 
 O `font` muda o tamanho do texto (8 a 32px, `font reset` volta ao padrão) e
 persiste. Não é easter egg: num site que é só texto, poder aumentar a fonte é
@@ -192,6 +194,70 @@ Ficaram de fora, e por quê:
   (`~/.secret`) e reações a comandos destrutivos (`rm -rf /`). Regra prática: _se é
   um comando, está no `help --all`; se é conteúdo escondido ou reação, não está em
   lugar nenhum._
+
+**O caminho destrutivo (reescrito em 2026-08-27, depois de olhar para ele de
+novo):**
+
+A primeira versão do `rm -rf --no-preserve-root /` imprimia dez linhas de
+`rm: removing '/bin'` e terminava com _"Just kidding. Nothing here was ever on a
+disk."_ Foi jogada fora inteira, por dois motivos que se somam:
+
+- **Os caminhos eram inventados.** Esta máquina não tem `/bin`, nem `/boot`, nem
+  `/dev`. O único comando do site que fabricava saída era justamente o que
+  fingia destruir — enquanto o `free` marca `synthetic: true` e o `/etc/motd`
+  promete por escrito que nada aqui é maquete.
+- **A piada se explicava.** Era o único lugar em que a máquina saía do
+  personagem para tranquilizar quem estava do outro lado. Quem digitou
+  `--no-preserve-root` inteiro sabia o que estava fazendo, e levou uma piscadela.
+
+O que existe no lugar:
+
+- **O `sudo` roda de verdade.** Ele levanta o privilégio (`Invocation.sudo`) e
+  despacha o resto do argv para o comando de fato. Não pede senha: não há nada
+  aqui que valha uma.
+- **A árvore é do root, e o `ls -l` diz isso.** É o que dá razão ao
+  `Permission denied` do `rm` sem precisar de nota de rodapé — a pista de que
+  existe um `sudo` a dar fica no lugar onde quem usa Unix já olha.
+- **O apagamento acontece.** `sudo rm -rf --no-preserve-root /` esvazia a Vfs.
+  Depois dele o `ls` responde `cannot access '.'`, o `cat` não acha nada, o
+  `pwd` continua imprimindo um diretório que não existe mais, e o shell segue de
+  pé porque nunca esteve no disco. É o que sobra numa máquina de verdade.
+- **A destruição se vê, um caminho por linha.** O `rm` sem `-v` seria
+  silencioso, e silêncio aqui não passa a impressão de nada acontecendo: passa a
+  de nada _ter_ acontecido — a primeira tentativa mostrava só falhas, e lida de
+  fora parecia um comando que bateu numa parede. Então ele fala, no formato
+  exato do `-v` (`removed '<path>'`, `removed directory '<path>'`), sobre
+  arquivos que existem: a varredura é da árvore montada, na ordem em que o
+  `rm -r` a visitaria — filhos antes do pai —, e o que é dito removido some
+  mesmo. Nenhum caminho é inventado; a única licença é a verbosidade que o
+  visitante não pediu.
+- **A cadência começa legível e acelera** (150ms → 18ms, ~2,6s no total). As
+  primeiras linhas precisam ser lidas: é ali que o visitante reconhece o próprio
+  `about.txt` sendo comido. Depois disso ler linha por linha não acrescenta
+  nada, e o que comunica é o borrão. Intervalo fixo erra os dois lados — lento
+  vira espera, rápido nunca deixa reconhecer nada.
+- **Não sobra nada além do `/RECOVERY.txt`.** O `/proc` também vai, apesar de um
+  procfs de verdade não sair: um sobrevivente a mais dilui o único que importa,
+  e "quase tudo apagado" é uma sensação pior do que qualquer uma das duas
+  inteiras. Ele volta no `reboot`, junto com o resto.
+- **Sobra um arquivo, e é o caminho de volta.** O `/RECOVERY.txt` é escrito
+  depois da varredura, e não antes, para que a recusa de removê-lo seja a
+  **última** linha da tela: ela é a única pista do caminho de volta, e no meio de
+  oitenta linhas de remoção ninguém a leria. É a única liberdade que o comando
+  toma, e ela é sobre _quando_ o arquivo nasce — não sobre o que é dito dele,
+  que é verdade: ele existe e não sai.
+- **O `reboot` remonta a árvore e roda o boot de novo, e não pede privilégio.**
+  Trancar a saída atrás de um segundo enigma cobraria do visitante sem devolver
+  piada nenhuma. Recarregar a página faz o mesmo, mais devagar.
+- **`rm -rf /*` passa direto pelo failsafe**, como no coreutils de verdade: o
+  glob entrega os filhos e um `/` nunca chega ao comando. É buraco conhecido do
+  original, e está aqui pelo mesmo motivo que o resto. Por essa porta o
+  `RECOVERY.txt` **não** é citado na saída: quando o glob fechou a lista o
+  arquivo ainda não existia, e o `rm` não fala de caminho que não lhe deram —
+  a regra de não inventar linha vale também contra a própria pista. Quem entrou
+  pelo atalho de quem conhece o buraco acha o sobrevivente do jeito de quem
+  conhece, com um `ls /`. Pelo mesmo motivo essa porta sai com código 0: por ela
+  o `rm` não falhou em nada.
 
 ### 2.5 Boot
 
@@ -666,7 +732,7 @@ src/
 │   ├── types.ts          contrato de comando (argv, stdin, piped) → stdout
 │   ├── registry.ts       registro + geração de /usr/bin
 │   ├── format.ts         colunas e formato do `ls -l`
-│   ├── nav.ts            navegação
+│   ├── nav.ts            navegação, sessão (`clear`, `help`, `reboot`, `exit`)
 │   ├── text.ts           ferramentas de texto
 │   ├── doom.ts           o comando `doom`
 │   ├── font.ts           o comando `font`
@@ -788,7 +854,8 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
       estreita — concluído em 2026-08-27
 - [x] Telemetria + comando `stats` — concluído em 2026-08-27, com `/etc/privacy`
 - [x] Easter eggs: `sudo`, `rm -rf /`, `cowsay`, `fortune`, `matrix`, `crt` —
-      concluído em 2026-08-27
+      concluído em 2026-08-27; o `sudo` e o `rm` foram reescritos no mesmo dia
+      para apagar de verdade, com `reboot` e `/RECOVERY.txt` (ver 2.4)
 - [x] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`) — concluído em
       2026-08-27, do release oficial e não do Google Fonts (ver 2.2)
 - [x] Deploy: instalado no Pi, com o `deploy-portfolio` versionado — concluído em

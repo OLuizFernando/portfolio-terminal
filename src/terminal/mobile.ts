@@ -8,6 +8,8 @@
  * que interessam, porque é onde está o prompt.
  */
 
+import { t, type Messages } from '../i18n';
+
 export interface TouchOptions {
   /** O elemento do terminal, que encolhe para caber acima do teclado. */
   frame: HTMLElement;
@@ -21,8 +23,11 @@ export interface Chip {
   label: string;
   /** O que chega ao shell. Termina em `\r` quando o chip executa sozinho. */
   data: string;
-  /** Vira o `title` do botão: explicação para quem toca sem saber o que é. */
-  hint: string;
+  /**
+   * Chave da dica no catálogo, não a dica: o texto vira o `title` do botão e
+   * acompanha o idioma, como o resto da tela.
+   */
+  hint: keyof Messages['chips'];
 }
 
 /**
@@ -32,13 +37,13 @@ export interface Chip {
  * comando; ^C é a saída de uma linha começada por engano.
  */
 export const CHIPS: Chip[] = [
-  { label: 'ls', data: 'ls\r', hint: 'list this directory' },
-  { label: 'cd ..', data: 'cd ..\r', hint: 'go up one directory' },
-  { label: 'cat', data: 'cat ', hint: 'read a file — pick it with Tab' },
-  { label: 'Tab', data: '\t', hint: 'complete what is typed' },
-  { label: '↑', data: '\x1b[A', hint: 'previous command' },
-  { label: 'help', data: 'help\r', hint: 'list the commands' },
-  { label: '^C', data: '\x03', hint: 'abandon the line' },
+  { label: 'ls', data: 'ls\r', hint: 'ls' },
+  { label: 'cd ..', data: 'cd ..\r', hint: 'cdUp' },
+  { label: 'cat', data: 'cat ', hint: 'cat' },
+  { label: 'Tab', data: '\t', hint: 'tab' },
+  { label: '↑', data: '\x1b[A', hint: 'previous' },
+  { label: 'help', data: 'help\r', hint: 'help' },
+  { label: '^C', data: '\x03', hint: 'cancel' },
 ];
 
 /** Ponteiro grosso: dedo, não mouse. É o mesmo teste que o `doom` usa para recusar. */
@@ -60,7 +65,7 @@ export function setupTouch(options: TouchOptions): void {
     button.type = 'button';
     button.className = 'chip';
     button.textContent = chip.label;
-    button.title = chip.hint;
+    button.title = t().chips[chip.hint];
     button.tabIndex = -1;
 
     // No `pointerdown`, não no `click`: o clique só chega depois de o navegador

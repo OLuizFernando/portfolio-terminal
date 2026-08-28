@@ -1,3 +1,4 @@
+import { fixed, t } from '../i18n';
 import type { TerminalControl } from '../commands/types';
 import { toDoomKey } from './keymap';
 
@@ -251,9 +252,15 @@ export async function runDoom(term: TerminalControl, options: DoomOptions): Prom
       fpsFrames = 0;
       fpsSince = now;
       term.write(
-        `\x1b[${termRows};1H\x1b[K${fps.toFixed(1)} fps  ${grid.cols}x${grid.rows}  ` +
-          `tick ${tickMs.toFixed(2)}ms  pior ${worstTick.toFixed(1)}ms  ` +
-          `frame ${(frameBytes / 1024).toFixed(1)}KB`,
+        `\x1b[${termRows};1H\x1b[K` +
+          t().doomHud(
+            fixed(fps, 1),
+            grid.cols,
+            grid.rows,
+            fixed(tickMs, 2),
+            fixed(worstTick, 1),
+            fixed(frameBytes / 1024, 1),
+          ),
       );
       // O HUD escreve por cima da imagem; sem isso o diff acharia que aquela
       // linha continua válida e o texto ficaria grudado na tela.

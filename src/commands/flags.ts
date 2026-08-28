@@ -6,6 +6,8 @@
  * para pegar um utilitário.
  */
 
+import { t } from '../i18n';
+
 export function parseFlags(
   argv: string[],
   known: string,
@@ -18,7 +20,7 @@ export function parseFlags(
     if (arg.length > 1 && arg.startsWith('-') && !arg.startsWith('--')) {
       for (const flag of arg.slice(1)) {
         if (!known.includes(flag)) {
-          return { flags, operands, error: `${command}: invalid option -- '${flag}'\n` };
+          return { flags, operands, error: t().invalidOption(command, flag) };
         }
         flags.add(flag);
       }

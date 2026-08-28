@@ -10,6 +10,7 @@
  */
 
 import art from '../generated/art.json';
+import { fixed, t } from '../i18n';
 import { human, uptimeLong } from '../system/format';
 import { SystemOffline, type SystemClient, type Stats } from '../system/stats';
 
@@ -70,28 +71,38 @@ class Clock {
   }
 }
 
+/**
+ * O rótulo é preenchido a partir do mais largo do bloco, e não com um número
+ * fixo de espaços: `memory` tem seis letras e `memória` tem sete, e alinhamento
+ * escrito à mão só serve ao idioma em que foi escrito.
+ */
 function systemBlock(stats: Stats | null): string[] {
-  if (!stats) {
-    return [
-      '  host        the machine is not answering right now',
-      '  status      serving this page from cache, or from a very patient nginx',
-    ];
-  }
+  if (!stats) return t().bootOffline;
 
   const root = stats.disks.find((disk) => disk.mount === '/') ?? stats.disks[0];
-  const temperature = stats.cpu.tempC === null ? '' : ` at ${stats.cpu.tempC.toFixed(1)}C`;
+  const temperature = stats.cpu.tempC === null ? '' : ` at ${fixed(stats.cpu.tempC, 1)}C`;
+  const label = t().bootLabels;
 
-  const lines = [
-    `  host        ${stats.model}`,
-    `  kernel      ${stats.kernel.release} ${stats.kernel.machine}`,
-    `  uptime      ${uptimeLong(stats.uptimeSec)}`,
-    `  cpu         ${stats.cpu.name} (${stats.cpu.cores}) @ ${(stats.cpu.mhz / 1000).toFixed(2)}GHz${temperature}`,
-    `  memory      ${Math.round(stats.mem.usedKb / 1024)}MiB used of ${Math.round(stats.mem.totalKb / 1024)}MiB`,
+  const rows: [string, string][] = [
+    [label.host, stats.model],
+    [label.kernel, `${stats.kernel.release} ${stats.kernel.machine}`],
+    [label.uptime, uptimeLong(stats.uptimeSec)],
+    [
+      label.cpu,
+      `${stats.cpu.name} (${stats.cpu.cores}) @ ${fixed(stats.cpu.mhz / 1000, 2)}GHz${temperature}`,
+    ],
+    [
+      label.memory,
+      `${Math.round(stats.mem.usedKb / 1024)}MiB used of ${Math.round(stats.mem.totalKb / 1024)}MiB`,
+    ],
   ];
-  if (root) lines.push(`  disk        ${human(root.usedKb)} of ${human(root.sizeKb)} (${root.usePct}%)`);
-  if (stats.synthetic) lines.push('  NOTE        synthetic data — this is not the Pi');
+  if (root) rows.push([label.disk, `${human(root.usedKb)} of ${human(root.sizeKb)} (${root.usePct}%)`]);
+  if (stats.synthetic) rows.push([label.note, t().bootSynthetic]);
 
-  return lines;
+  // 12 é a coluna em que o bloco sempre começou, e o piso a preserva; um rótulo
+  // mais longo que isso empurra a coluna em vez de encostar no valor.
+  const width = Math.max(12, Math.max(...rows.map(([name]) => name.length)) + 2);
+  return rows.map(([name, value]) => `  ${name.padEnd(width)}${value}`);
 }
 
 export interface BootOptions {
@@ -147,7 +158,7 @@ export async function runBoot({ output, system, onSkippable, langHint }: BootOpt
 
     await clock.wait(250);
     line();
-    line('This is a portfolio with no interface. It has a shell instead.');
+    line(t().bootWelcome);
     await clock.wait(150);
     line();
     if (langHint) {
@@ -155,7 +166,7 @@ export async function runBoot({ output, system, onSkippable, langHint }: BootOpt
       await clock.wait(150);
       line();
     }
-    line("Type 'help' for the handful of commands, or 'ls' to just look around.");
+    line(t().bootHelpHint);
 
     line();
   } finally {

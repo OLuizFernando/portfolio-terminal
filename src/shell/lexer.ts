@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 export interface Word {
   value: string;
   /** Palavra veio (parcialmente) entre aspas — não sofre expansão de glob. */
@@ -41,7 +43,7 @@ export function tokenize(input: string): Token[] {
     }
 
     if (char === '&') {
-      if (input[i + 1] !== '&') throw new ShellError("bash: syntax error near unexpected token `&'");
+      if (input[i + 1] !== '&') throw new ShellError(t().syntaxNear('&'));
       tokens.push({ type: 'separator', op: '&&' });
       i += 2;
       continue;
@@ -76,7 +78,7 @@ export function tokenize(input: string): Token[] {
       const c = input[i]!;
 
       if (c === '\\') {
-        if (i + 1 >= input.length) throw new ShellError('bash: syntax error: unexpected end of input');
+        if (i + 1 >= input.length) throw new ShellError(t().syntaxUnexpectedEnd);
         value += input[i + 1];
         quoted = true;
         i += 2;
@@ -85,7 +87,7 @@ export function tokenize(input: string): Token[] {
 
       if (c === "'" || c === '"') {
         const close = input.indexOf(c, i + 1);
-        if (close === -1) throw new ShellError(`bash: unexpected EOF while looking for matching \`${c}'`);
+        if (close === -1) throw new ShellError(t().syntaxUnmatched(c));
         value += input.slice(i + 1, close);
         quoted = true;
         i = close + 1;

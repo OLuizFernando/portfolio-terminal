@@ -1,3 +1,4 @@
+import { docs, t } from '../i18n';
 import { fail, ok, type CommandSpec, type Invocation } from './types';
 
 /**
@@ -27,18 +28,18 @@ const font: CommandSpec = {
     const fallback = ctx.env.defaultFontSize;
 
     if (argument === undefined) {
-      return ok(`${ctx.env.fontSize}px (default ${fallback}, ${MIN_SIZE}-${MAX_SIZE})\n`);
+      return ok(t().fontCurrent(ctx.env.fontSize, fallback, MIN_SIZE, MAX_SIZE));
     }
 
-    if (argv.length > 2) return fail(`usage: ${font.usage}\n`, 2);
+    if (argv.length > 2) return fail(t().usageLine(docs(font).usage), 2);
 
     const size = argument === 'reset' ? fallback : Number(argument);
 
     if (!Number.isInteger(size)) {
-      return fail(`font: not a size: ${argument}\nusage: ${font.usage}\n`, 2);
+      return fail(t().fontNotASize(argument) + t().usageLine(docs(font).usage), 2);
     }
     if (size < MIN_SIZE || size > MAX_SIZE) {
-      return fail(`font: size must be between ${MIN_SIZE} and ${MAX_SIZE}\n`, 2);
+      return fail(t().fontRange(MIN_SIZE, MAX_SIZE), 2);
     }
 
     ctx.term.setFontSize(size);

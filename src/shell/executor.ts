@@ -2,6 +2,7 @@ import { expand, resolve } from '../fs/path';
 import { expandGlob, hasMagic } from './glob';
 import { parse, ShellError, type Pipeline, type SimpleCommand } from './parser';
 import type { ShellContext } from '../commands/types';
+import { t } from '../i18n';
 
 export interface ExecOutcome {
   /** Texto já pronto para a tela (stdout não redirecionado + stderr). */
@@ -40,7 +41,7 @@ async function runPipeline(pipeline: Pipeline, ctx: ShellContext): Promise<ExecO
     const spec = ctx.registry.get(name);
 
     if (!spec) {
-      output += `bash: ${name}: command not found\ntry 'help' for the list of commands\n`;
+      output += t().commandNotFound(name) + t().tryHelp;
       stdin = '';
       code = 127;
       continue;
@@ -56,7 +57,7 @@ async function runPipeline(pipeline: Pipeline, ctx: ShellContext): Promise<ExecO
     if (command.redirect) {
       const target = resolve(ctx.env.cwd, expand(command.redirect.target, ctx.env.home));
       if (ctx.vfs.isDir(target)) {
-        output += `bash: ${command.redirect.target}: Is a directory\n`;
+        output += t().redirectIsDir(command.redirect.target);
         code = 1;
       } else {
         ctx.vfs.writeFile(target, result.stdout, command.redirect.op === '>>');

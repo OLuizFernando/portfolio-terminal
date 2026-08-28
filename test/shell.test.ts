@@ -18,6 +18,7 @@ import { SystemClient } from '../src/system/stats';
 import { execute } from '../src/shell/executor';
 import { complete } from '../src/terminal/completion';
 import { runBoot } from '../src/terminal/boot';
+import { ptDocs } from '../src/i18n';
 import art from '../src/generated/art.json';
 
 const langs = (manifest as unknown as Manifest).langs;
@@ -553,8 +554,8 @@ for (const [lang, paths] of trees) {
   }
 }
 
-
 // --- lang ---------------------------------------------------------------
+
 await check('lang', (o) => o.startsWith('en (available:') && o.includes('pt'), 'lang: atual e disponíveis');
 await check('lang xx', has('no such language: xx', 'available:'), 'lang: código inexistente');
 await check('lang en pt', has('usage: lang'), 'lang: argumento a mais');
@@ -570,6 +571,59 @@ await check('ls', has('degree.txt', 'courses.txt'), 'os nomes de arquivo são ig
 await check('cat degree.txt', (o) => /[ãõçáéíóúê]/i.test(o), 'o conteúdo montado está em português');
 await check('ls /usr/bin', has('lang', 'doom', 'ls'), '/usr/bin sobrevive à remontagem');
 await check('ls /proc', has('cpuinfo', 'meminfo'), '/proc sobrevive à remontagem');
+
+// --- lang: o shell junto com o conteúdo ------------------------------------
+//
+// A partir daqui a sessão está em português, e é isso que estes testes aferem:
+// que o idioma vale para o shell inteiro, não só para os arquivos montados.
+
+await check('help', has('o essencial:', 'lista tudo'), 'help fala português');
+await check('man ls', has('NOME', 'USO', 'DESCRIÇÃO', 'lista o conteúdo'), 'man fala português');
+await check('cat nao-existe.txt', has('Arquivo ou diretório inexistente'), 'erro de arquivo em português');
+await check('ls -z', has('opção inválida'), 'erro de flag em português');
+await check(
+  'naoexiste',
+  has('comando não encontrado', "tente 'help'"),
+  'comando não encontrado em português',
+);
+await check('crt on', (o) => o === 'crt: ligado\n', 'crt responde em português');
+await check('crt off', (o) => o === 'crt: desligado\n', 'crt off responde em português');
+await check('cd /home/guest && tree', has('diretórios,', 'arquivos'), 'tree conta em português');
+// A camada 3 sem máquina: o aviso de indisponibilidade também é traduzido.
+await check('free', has('não consigo falar com a máquina'), 'camada 3 offline em português');
+
+// Nome de comando e flag não se traduzem — são a interface da máquina, e nenhum
+// locale do mundo mexe neles. O resumo ao lado, sim.
+await check(
+  'help --all',
+  has('doom', 'jogar DOOM', 'fortune', 'neofetch'),
+  'nome do comando em inglês, resumo em português',
+);
+
+// O boot também: ele é a primeira coisa que o visitante lê depois de um reboot.
+const bootPt = await boot(20);
+count++;
+if (!bootPt.text.includes('Isto é um portfólio sem interface')) {
+  failures++;
+  console.error('FAIL  o boot fala português');
+} else console.log('ok    o boot fala português');
+
+// As linhas de kernel não: elas saem do kernel, que fala inglês em qualquer
+// locale. É a mesma fronteira do nome de comando, e ela é deliberada.
+count++;
+if (!bootPt.text.includes('Booting Linux')) {
+  failures++;
+  console.error('FAIL  as linhas de kernel do boot seguem em inglês');
+} else console.log('ok    as linhas de kernel do boot seguem em inglês');
+
+// Comando novo sem tradução aparece aqui, e não na cara do visitante: o `docs`
+// cai no inglês em silêncio de propósito, e o silêncio precisa de um alarme.
+count++;
+const semTraducao = [...registry.values()].filter((spec) => !ptDocs[spec.name]).map((spec) => spec.name);
+if (semTraducao.length > 0) {
+  failures++;
+  console.error(`FAIL  todo comando tem tradução (falta: ${semTraducao.join(', ')})`);
+} else console.log(`ok    todo comando tem tradução (${registry.size})`);
 
 // Uma tradução incompleta não pode deixar a sessão presa num diretório morto.
 env.cwd = '/home/guest/nao-existe';

@@ -4,6 +4,8 @@
  * denuncia a imitação mais rápido do que qualquer outra coisa.
  */
 
+import { fixed, t } from '../i18n';
+
 const UNITS = ['K', 'M', 'G', 'T', 'P'];
 
 /**
@@ -23,14 +25,12 @@ export function human(kb: number, suffix = ''): string {
     unit++;
   }
 
-  const text = value < 10 ? value.toFixed(1) : String(Math.round(value));
+  const text = value < 10 ? fixed(value, 1) : String(Math.round(value));
   return `${text}${UNITS[unit]}${suffix}`;
 }
 
 /** MiB com uma casa, que é como o `top` mostra memória. */
-export const mib = (kb: number): string => (kb / 1024).toFixed(1);
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+export const mib = (kb: number): string => fixed(kb / 1024, 1);
 
 /** `4 days, 10:48` — o formato do `uptime` e do cabeçalho do `top`. */
 export function uptimeShort(seconds: number): string {
@@ -39,9 +39,9 @@ export function uptimeShort(seconds: number): string {
   const minutes = Math.floor((seconds % 3600) / 60);
 
   const clock = `${hours}:${String(minutes).padStart(2, '0')}`;
-  if (days > 0) return `${plural(days, 'day')}, ${clock}`;
+  if (days > 0) return `${t().days(days)}, ${clock}`;
   if (hours > 0) return clock;
-  return `${plural(minutes, 'min')}`;
+  return t().minutes(minutes);
 }
 
 /** `4 days, 10 hours, 48 mins` — o formato do `neofetch`. */
@@ -51,9 +51,9 @@ export function uptimeLong(seconds: number): string {
   const minutes = Math.floor((seconds % 3600) / 60);
 
   const parts: string[] = [];
-  if (days > 0) parts.push(plural(days, 'day'));
-  if (hours > 0) parts.push(plural(hours, 'hour'));
-  parts.push(plural(minutes, 'min'));
+  if (days > 0) parts.push(t().days(days));
+  if (hours > 0) parts.push(t().hours(hours));
+  parts.push(t().minutes(minutes));
   return parts.join(', ');
 }
 
@@ -69,7 +69,7 @@ export function cpuTime(seconds: number): string {
 /** `4:12.30` — a coluna TIME+ do `top`, que conta centésimos. */
 export function cpuTimePlus(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
-  const rest = (seconds % 60).toFixed(2).padStart(5, '0');
+  const rest = fixed(seconds % 60, 2).padStart(5, '0');
   return `${minutes}:${rest}`;
 }
 
@@ -80,7 +80,7 @@ export function clock(date = new Date()): string {
     .join(':');
 }
 
-export const load = (avg: readonly number[]): string => avg.map((n) => n.toFixed(2)).join(', ');
+export const load = (avg: readonly number[]): string => avg.map((n) => fixed(n, 2)).join(', ');
 
 /**
  * Monta uma tabela alinhada. `align` diz, por coluna, se o conteúdo encosta à

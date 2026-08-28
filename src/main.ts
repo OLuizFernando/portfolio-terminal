@@ -15,6 +15,7 @@ import { createTerminal } from './terminal/terminal';
 import { loadHistory, loadPrefs, saveHistory, savePrefs } from './storage';
 import { mountProc } from './system/proc';
 import { SystemClient } from './system/stats';
+import { setLocale } from './i18n';
 import { firstWord, Telemetry } from './system/telemetry';
 
 const manifest = rawManifest as unknown as Manifest;
@@ -42,6 +43,9 @@ function main(): void {
   // `mount` já cai no primeiro; o `env` precisa concordar com ele, senão o
   // `lang` mostraria um idioma que não é o que está na tela.
   env.lang = LANGS.includes(prefs.lang) ? prefs.lang : (LANGS[0] ?? 'en');
+  // Antes do primeiro `mount` e antes do boot: o shell inteiro lê o locale daqui,
+  // e o boot é a primeira coisa que escreve na tela.
+  setLocale(env.lang);
   env.fontSize = prefs.fontSize;
   env.crt = prefs.crt;
   env.history = loadHistory();

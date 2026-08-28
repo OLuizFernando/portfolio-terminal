@@ -1,4 +1,5 @@
 import { runDoom, type DoomOptions } from '../doom/runtime';
+import { docs, fixed, t } from '../i18n';
 import { fail, ok, type CommandSpec, type Invocation } from './types';
 
 const MIN_FONT_SIZE = 4;
@@ -33,10 +34,7 @@ const doom: CommandSpec = {
     'only downloaded the first time you ask for it.',
   async run({ argv, ctx }: Invocation) {
     if (!hasKeyboard()) {
-      return fail(
-        'doom: needs a keyboard — arrows, ctrl and space at the same time.\n' +
-          'Come back from a desktop and it will be here.\n',
-      );
+      return fail(t().doomNeedsKeyboard);
     }
 
     const options: DoomOptions = { showFps: false };
@@ -51,27 +49,32 @@ const doom: CommandSpec = {
       if (font) {
         const size = Number(font[1]);
         if (size < MIN_FONT_SIZE || size > MAX_FONT_SIZE) {
-          return fail(`doom: --font must be between ${MIN_FONT_SIZE} and ${MAX_FONT_SIZE}\n`, 2);
+          return fail(t().doomFontRange(MIN_FONT_SIZE, MAX_FONT_SIZE), 2);
         }
         options.fontSize = size;
         continue;
       }
 
-      return fail(`doom: unknown option ${arg}\nusage: ${doom.usage}\n`, 2);
+      return fail(t().doomUnknownOption(arg) + t().usageLine(docs(doom).usage), 2);
     }
 
-    ctx.term.write('loading DOOM (about 4MB, once)...\n');
+    ctx.term.write(t().doomLoading);
 
     try {
       const result = await runDoom(ctx.term, options);
       return ok(
-        `DOOM: ${result.frames} frames in ${result.seconds.toFixed(1)}s ` +
-          `(${result.fps.toFixed(1)} fps) at ${result.cols}x${result.rows}, ` +
-          `worst tick ${result.worstTickMs.toFixed(1)}ms\n`,
+        t().doomResult(
+          result.frames,
+          fixed(result.seconds, 1),
+          fixed(result.fps, 1),
+          result.cols,
+          result.rows,
+          fixed(result.worstTickMs, 1),
+        ),
       );
     } catch (error) {
       console.error('[doom]', error);
-      return fail(`doom: failed to start (${String(error)})\n`);
+      return fail(t().doomFailed(String(error)));
     }
   },
 };

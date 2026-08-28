@@ -9,6 +9,7 @@
 import { runTop } from '../system/top';
 import { clock, cpuTime, human, load, table, uptimeLong, uptimeShort } from '../system/format';
 import { SystemOffline, type Stats } from '../system/stats';
+import { fixed, t } from '../i18n';
 import { parseFlags } from './flags';
 import { fail, fromLines, ok, type CommandResult, type CommandSpec, type Invocation } from './types';
 
@@ -34,7 +35,7 @@ function needsMachine(
         return await run(await invocation.ctx.system.snapshot(), flags, invocation);
       } catch (caught) {
         if (caught instanceof SystemOffline) {
-          return fail(`${spec.name}: cannot reach the machine\n`);
+          return fail(t().offline(spec.name));
         }
         throw caught;
       }
@@ -50,9 +51,6 @@ const whoami: CommandSpec = {
   run: ({ ctx }: Invocation) => ok(`${ctx.env.user}\n`),
 };
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 const date: CommandSpec = {
   name: 'date',
   summary: 'print the current date and time',
@@ -67,7 +65,7 @@ const date: CommandSpec = {
     const zone = `${sign}${String(Math.floor(absolute / 60)).padStart(2, '0')}${String(absolute % 60).padStart(2, '0')}`;
     const day = String(now.getDate()).padStart(2, ' ');
     return ok(
-      `${WEEKDAYS[now.getDay()]} ${MONTHS[now.getMonth()]} ${day} ${clock(now)} ${zone} ${now.getFullYear()}\n`,
+      `${t().weekdays[now.getDay()]} ${t().months[now.getMonth()]} ${day} ${clock(now)} ${zone} ${now.getFullYear()}\n`,
     );
   },
 };
@@ -107,7 +105,7 @@ const uptime = needsMachine(
     man: 'Time since the last boot, and the load average over 1, 5 and 15 minutes.\nThis is a real number from a real machine.',
   },
   (stats) =>
-    ok(` ${clock()} up ${uptimeShort(stats.uptimeSec)},  load average: ${load(stats.load.avg)}\n`),
+    ok(t().uptimeLine(clock(), uptimeShort(stats.uptimeSec), load(stats.load.avg))),
 );
 
 const free = needsMachine(
@@ -123,9 +121,9 @@ const free = needsMachine(
     const { mem } = stats;
 
     const rows = [
-      ['', 'total', 'used', 'free', 'shared', 'buff/cache', 'available'],
+      t().freeHeader,
       [
-        'Mem:',
+        t().freeRows.mem,
         size(mem.totalKb),
         size(mem.usedKb),
         size(mem.freeKb),
@@ -133,7 +131,7 @@ const free = needsMachine(
         size(mem.buffCacheKb),
         size(mem.availableKb),
       ],
-      ['Swap:', size(mem.swapTotalKb), size(mem.swapUsedKb), size(mem.swapFreeKb)],
+      [t().freeRows.swap, size(mem.swapTotalKb), size(mem.swapUsedKb), size(mem.swapFreeKb)],
     ];
 
     return ok(fromLines(table(rows, [false, true, true, true, true, true, true], 2)));
@@ -151,7 +149,7 @@ const df = needsMachine(
   (stats, flags) => {
     const size = flags.has('h') ? (kb: number) => human(kb) : (kb: number) => String(kb);
     const rows = [
-      ['Filesystem', flags.has('h') ? 'Size' : '1K-blocks', 'Used', 'Avail', 'Use%', 'Mounted on'],
+      t().dfHeader(flags.has('h')),
       ...stats.disks.map((disk) => [
         disk.device,
         size(disk.sizeKb),
@@ -178,12 +176,12 @@ const ps = needsMachine(
   },
   (stats) => {
     const rows = [
-      ['USER', 'PID', '%CPU', '%MEM', 'RSS', 'S', 'TIME', 'COMMAND'],
+      t().psHeader,
       ...stats.processes.map((process) => [
         process.user,
         String(process.pid),
-        process.cpuPct.toFixed(1),
-        process.memPct.toFixed(1),
+        fixed(process.cpuPct, 1),
+        fixed(process.memPct, 1),
         String(process.rssKb),
         process.state,
         cpuTime(process.timeSec),
@@ -200,22 +198,23 @@ export function neofetchLines(stats: Stats, user: string, host: string): string[
   const root = stats.disks.find((disk) => disk.mount === '/') ?? stats.disks[0];
   const { cpu } = stats;
 
+  const label = t().neofetch;
   const lines = [
     `${user}@${host}`,
     '-'.repeat(user.length + host.length + 1),
-    `Host: ${stats.model}`,
-    `Kernel: ${stats.kernel.release} ${stats.kernel.machine}`,
-    `Uptime: ${uptimeLong(stats.uptimeSec)}`,
-    `Shell: this one, written by hand`,
-    `Terminal: xterm.js`,
-    `CPU: ${cpu.name} (${cpu.cores}) @ ${(cpu.mhz / 1000).toFixed(2)}GHz`,
-    `Load: ${load(stats.load.avg)}`,
+    `${label.host}: ${stats.model}`,
+    `${label.kernel}: ${stats.kernel.release} ${stats.kernel.machine}`,
+    `${label.uptime}: ${uptimeLong(stats.uptimeSec)}`,
+    `${label.shell}: ${label.shellValue}`,
+    `${label.terminal}: xterm.js`,
+    `${label.cpu}: ${cpu.name} (${cpu.cores}) @ ${fixed(cpu.mhz / 1000, 2)}GHz`,
+    `${label.load}: ${load(stats.load.avg)}`,
   ];
 
-  if (cpu.tempC !== null) lines.push(`Temp: ${cpu.tempC.toFixed(1)}C`);
-  lines.push(`Memory: ${Math.round(stats.mem.usedKb / 1024)}MiB / ${Math.round(stats.mem.totalKb / 1024)}MiB`);
-  if (root) lines.push(`Disk (/): ${human(root.usedKb)} / ${human(root.sizeKb)} (${root.usePct}%)`);
-  if (stats.synthetic) lines.push('', 'NOTE: synthetic data — this is not the Pi.');
+  if (cpu.tempC !== null) lines.push(`${label.temp}: ${fixed(cpu.tempC, 1)}C`);
+  lines.push(`${label.memory}: ${Math.round(stats.mem.usedKb / 1024)}MiB / ${Math.round(stats.mem.totalKb / 1024)}MiB`);
+  if (root) lines.push(`${label.disk}: ${human(root.usedKb)} / ${human(root.sizeKb)} (${root.usePct}%)`);
+  if (stats.synthetic) lines.push('', label.synthetic);
 
   return lines;
 }
@@ -296,14 +295,14 @@ const top: CommandSpec = {
   async run({ ctx, piped }: Invocation) {
     if (piped) {
       // O `top` de verdade também recusa: sem terminal não há tela para repintar.
-      return fail('top: cannot write to a pipe — try `ps` instead\n', 2);
+      return fail(t().topPiped, 2);
     }
 
     try {
       await runTop(ctx);
       return ok('');
     } catch (error) {
-      if (error instanceof SystemOffline) return fail('top: cannot reach the machine\n');
+      if (error instanceof SystemOffline) return fail(t().offline('top'));
       throw error;
     }
   },

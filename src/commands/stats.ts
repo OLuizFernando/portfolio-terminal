@@ -1,4 +1,5 @@
 import { fetchUsage, type Usage } from '../system/telemetry';
+import { t } from '../i18n';
 import { wrap } from '../system/format';
 import { SystemOffline } from '../system/stats';
 import { fail, fromLines, ok, type CommandSpec, type Invocation } from './types';
@@ -6,16 +7,15 @@ import { fail, fromLines, ok, type CommandSpec, type Invocation } from './types'
 /** Largura máxima da barra. Cabe no celular sem embrulhar. */
 const BAR = 24;
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 /** `2026-08-27T19:47:40Z` vira `27 Aug 2026`. Data, não carimbo. */
 function day(iso: string | null): string {
   const date = iso === null ? null : new Date(iso);
-  if (date === null || Number.isNaN(date.getTime())) return 'the beginning';
-  return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+  if (date === null || Number.isNaN(date.getTime())) return t().statsBeginning;
+  return `${date.getUTCDate()} ${t().months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
-const count = (value: number) => value.toLocaleString('en-US');
+// O separador de milhar vem do locale: 1,234 em inglês, 1.234 em português.
+const count = (value: number) => value.toLocaleString(t().locale);
 
 /**
  * Ranking com barra. A barra é proporcional ao primeiro colocado, não ao total:
@@ -42,25 +42,18 @@ export function report(usage: Usage, cols: number, bars: boolean): string[] {
   // crescer, porque linha longa demais se lê pior do que linha curta.
   const say = (text: string) => wrap(text, Math.max(20, Math.min(cols, 76)));
 
-  if (usage.total === 0) return say('Nothing recorded yet. You are early.');
+  if (usage.total === 0) return say(t().statsEmpty);
 
-  const where = usage.countries > 1 ? `, from ${usage.countries} countries` : '';
-  const lines = [...say(`${count(usage.total)} commands typed here since ${day(usage.since)}${where}`), ''];
+  const lines = [...say(t().statsTotal(count(usage.total), day(usage.since), usage.countries)), ''];
 
   lines.push(...ranking(usage.top, cols, bars));
 
   if (usage.missing.length > 0) {
-    lines.push('', ...say('not commands here, but people tried:'), '');
+    lines.push('', ...say(t().statsMissing), '');
     lines.push(...ranking(usage.missing, cols, bars));
   }
 
-  lines.push(
-    '',
-    ...say(
-      'Nobody is identified: no IP, no cookie, no session. Only the first word ' +
-        'of each line, and the country. `cat /etc/privacy` for the whole of it.',
-    ),
-  );
+  lines.push('', ...say(t().statsPrivacy));
 
   return lines;
 }
@@ -82,7 +75,7 @@ const stats: CommandSpec = {
       // Piped não leva barra: `stats | grep doom` tem que devolver a linha.
       return ok(fromLines(report(await fetchUsage(), ctx.term.cols, !piped)));
     } catch (caught) {
-      if (caught instanceof SystemOffline) return fail('stats: cannot reach the machine\n');
+      if (caught instanceof SystemOffline) return fail(t().offline('stats'));
       throw caught;
     }
   },

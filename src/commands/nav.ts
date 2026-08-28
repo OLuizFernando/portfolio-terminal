@@ -2,6 +2,7 @@ import { basename, contract, dirname, expand, resolve } from '../fs/path';
 import { isProcPath, readProc } from '../system/proc';
 import { parseFlags } from './flags';
 import { columns, formatDate, modeOf, sizeOf } from './format';
+import { docs, t } from '../i18n';
 import { fail, fromLines, ok, toLines, type CommandSpec, type Invocation } from './types';
 
 const decorate = (name: string, isDir: boolean) => (isDir ? `${name}/` : name);
@@ -47,7 +48,7 @@ const ls: CommandSpec = {
           `${modeOf(entry.node)} 1 root root ${sizes[i]!.padStart(sizeWidth)} ` +
           `${formatDate(entry.node.mtime)} ${decorate(entry.name, entry.node.kind === 'dir')}`,
       );
-      return `total ${listing.length}\n${fromLines(lines)}`;
+      return `${t().lsTotal(listing.length)}\n${fromLines(lines)}`;
     };
 
     for (const target of targets) {
@@ -55,7 +56,7 @@ const ls: CommandSpec = {
       const node = ctx.vfs.lookup(path);
 
       if (!node) {
-        stderr += `ls: cannot access '${target}': No such file or directory\n`;
+        stderr += t().cannotAccess('ls', target);
         code = 2;
         continue;
       }
@@ -86,8 +87,8 @@ const cd: CommandSpec = {
     const target = raw === '-' ? ctx.env.oldcwd : resolve(ctx.env.cwd, expand(raw, ctx.env.home));
     const node = ctx.vfs.lookup(target);
 
-    if (!node) return fail(`cd: ${raw}: No such file or directory\n`);
-    if (node.kind !== 'dir') return fail(`cd: ${raw}: Not a directory\n`);
+    if (!node) return fail(t().noSuchFile('cd', raw));
+    if (node.kind !== 'dir') return fail(t().notDirectory('cd', raw));
 
     ctx.env.oldcwd = ctx.env.cwd;
     ctx.env.cwd = target;
@@ -124,10 +125,10 @@ const cat: CommandSpec = {
       const node = ctx.vfs.lookup(path);
 
       if (!node) {
-        stderr += `cat: ${target}: No such file or directory\n`;
+        stderr += t().noSuchFile('cat', target);
         code = 1;
       } else if (node.kind === 'dir') {
-        stderr += `cat: ${target}: Is a directory\n`;
+        stderr += t().isDirectory('cat', target);
         code = 1;
       } else if (isProcPath(path)) {
         // Os arquivos de /proc existem na árvore vazios: o conteúdo é lido da
@@ -135,7 +136,7 @@ const cat: CommandSpec = {
         try {
           stdout += await readProc(basename(path));
         } catch {
-          stderr += `cat: ${target}: cannot reach the machine\n`;
+          stderr += t().offline('cat');
           code = 1;
         }
       } else {
@@ -159,8 +160,8 @@ const tree: CommandSpec = {
     const root = resolve(ctx.env.cwd, expand(raw, ctx.env.home));
     const node = ctx.vfs.lookup(root);
 
-    if (!node) return fail(`tree: ${raw}: No such file or directory\n`);
-    if (node.kind === 'file') return ok(`${raw}\n\n0 directories, 1 file\n`);
+    if (!node) return fail(t().noSuchFile('tree', raw));
+    if (node.kind === 'file') return ok(`${raw}\n\n${t().treeCount(0, 1)}\n`);
 
     let dirs = 0;
     let files = 0;
@@ -179,7 +180,7 @@ const tree: CommandSpec = {
     };
 
     walk(root, '');
-    lines.push('', `${dirs} ${dirs === 1 ? 'directory' : 'directories'}, ${files} ${files === 1 ? 'file' : 'files'}`);
+    lines.push('', t().treeCount(dirs, files));
     return ok(fromLines(lines));
   },
 };
@@ -206,14 +207,9 @@ const help: CommandSpec = {
     const width = Math.max(...specs.map((spec) => spec.name.length));
     const lines = specs
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((spec) => `  \x1b[1m${spec.name.padEnd(width)}\x1b[0m  ${spec.summary}`);
+      .map((spec) => `  \x1b[1m${spec.name.padEnd(width)}\x1b[0m  ${docs(spec).summary}`);
 
-    const header = all ? 'every command on this machine:' : 'the essentials:';
-    const footer = all
-      ? "\n'man <command>' explains any of them in detail."
-      : "\n'help --all' lists everything, 'man <command>' explains one in detail.";
-
-    return ok(`${header}\n${fromLines(lines)}${footer}\n`);
+    return ok(`${t().helpHeader(all)}\n${fromLines(lines)}${t().helpFooter(all)}\n`);
   },
 };
 
@@ -223,13 +219,15 @@ const man: CommandSpec = {
   usage: 'man <command>',
   run({ argv, ctx }: Invocation) {
     const name = argv[1];
-    if (!name) return fail('What manual page do you want?\n');
+    if (!name) return fail(t().manWhich);
 
     const spec = ctx.registry.get(name);
-    if (!spec || spec.hidden) return fail(`No manual entry for ${name}\n`);
+    if (!spec || spec.hidden) return fail(t().manNoEntry(name));
 
-    const body = spec.man ?? spec.summary.charAt(0).toUpperCase() + spec.summary.slice(1) + '.';
-    return ok(`\x1b[1mNAME\x1b[0m\n  ${spec.name} — ${spec.summary}\n\n\x1b[1mUSAGE\x1b[0m\n  ${spec.usage}\n\n\x1b[1mDESCRIPTION\x1b[0m\n${body
+    const page = docs(spec);
+    const section = t().manSections;
+    const body = page.man ?? page.summary.charAt(0).toUpperCase() + page.summary.slice(1) + '.';
+    return ok(`\x1b[1m${section.name}\x1b[0m\n  ${spec.name} — ${page.summary}\n\n\x1b[1m${section.usage}\x1b[0m\n  ${page.usage}\n\n\x1b[1m${section.description}\x1b[0m\n${body
       .split('\n')
       .map((line) => (line ? `  ${line}` : ''))
       .join('\n')}\n`);
@@ -278,7 +276,7 @@ const reboot: CommandSpec = {
     'and takes longer.',
   async run({ ctx, piped }: Invocation) {
     // Reiniciar limpa a tela e redesenha o boot. Num pipe não há tela.
-    if (piped) return fail('reboot: cannot write to a pipe\n', 2);
+    if (piped) return fail(t().rebootPiped, 2);
     await ctx.reboot();
     return ok();
   },
@@ -300,16 +298,16 @@ const find: CommandSpec = {
       const arg = argv[i]!;
       if (arg === '-name') {
         const pattern = argv[++i];
-        if (!pattern) return fail("find: missing argument to '-name'\n", 2);
+        if (!pattern) return fail(t().findMissingArgument('-name'), 2);
         namePattern = new RegExp(
           '^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$',
         );
       } else if (arg === '-type') {
         const value = argv[++i];
-        if (value !== 'f' && value !== 'd') return fail(`find: unknown argument to -type: ${value ?? ''}\n`, 2);
+        if (value !== 'f' && value !== 'd') return fail(t().findBadType(value ?? ''), 2);
         type = value;
       } else if (arg.startsWith('-')) {
-        return fail(`find: unknown predicate '${arg}'\n`, 2);
+        return fail(t().findUnknownPredicate(arg), 2);
       } else {
         operands.push(arg);
       }
@@ -317,7 +315,7 @@ const find: CommandSpec = {
 
     const raw = operands[0] ?? '.';
     const root = resolve(ctx.env.cwd, expand(raw, ctx.env.home));
-    if (!ctx.vfs.exists(root)) return fail(`find: '${raw}': No such file or directory\n`);
+    if (!ctx.vfs.exists(root)) return fail(t().noSuchFile('find', `'${raw}'`));
 
     const results = ctx.vfs.walk(root).filter((path) => {
       const node = ctx.vfs.lookup(path)!;

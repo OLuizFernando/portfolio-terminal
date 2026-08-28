@@ -15,6 +15,7 @@ import {
   type Invocation,
   type ShellContext,
 } from './types';
+import { docs, t } from '../i18n';
 import { runMatrix } from '../terminal/matrix';
 import { wrap } from '../system/format';
 import { resolve } from '../fs/path';
@@ -36,11 +37,11 @@ const sudo: CommandSpec = {
     'Most commands do not care whether you used sudo. Exactly one does, and it\n' +
     'is not in any list.',
   run({ argv, stdin, piped, ctx }: Invocation) {
-    if (argv.length < 2) return fail(`usage: ${sudo.usage}\n`, 2);
+    if (argv.length < 2) return fail(t().usageLine(docs(sudo).usage), 2);
 
     const name = argv[1]!;
     const spec = ctx.registry.get(name);
-    if (!spec) return fail(`sudo: ${name}: command not found\n`);
+    if (!spec) return fail(t().sudoNotFound(name));
 
     // O sudo não interpreta nada do que vem depois: ele levanta o privilégio e
     // entrega o resto do argv inteiro, com til e glob já expandidos pelo
@@ -52,22 +53,8 @@ const sudo: CommandSpec = {
 /** O arquivo que sobrevive ao apagamento, porque é o caminho de volta dele. */
 const RECOVERY = '/RECOVERY.txt';
 
-const RECOVERY_TEXT = fromLines([
-  'You ran rm as root against /, and it ran.',
-  '',
-  'Every file you could reach is gone — the listing you just watched go by was',
-  'the whole machine. The shell survived because it was never on a disk: it',
-  'lives in the tab you are reading this in, and so did everything you deleted.',
-  'The Raspberry Pi on the other side of this connection never saw the command.',
-  'What you had was a copy, handed to your browser at boot.',
-  '',
-  'This file survived because it is immutable, and it is immutable because it is',
-  'the way back:',
-  '',
-  '    reboot        remount the filesystem and start the machine again',
-  '',
-  'Reloading the page does the same thing, and takes longer.',
-]);
+/** Lido na hora do apagamento: o sobrevivente fala o idioma de quem apagou. */
+const recoveryText = () => fromLines(t().recoveryText);
 
 /**
  * O único caminho que o `rm` não leva, e o motivo que o `rm` de verdade daria.
@@ -76,7 +63,7 @@ const RECOVERY_TEXT = fromLines([
  * saída que não fosse recarregar a página.
  */
 function immovable(path: string): string | null {
-  return path === RECOVERY ? 'Operation not permitted' : null;
+  return path === RECOVERY ? t().rmReasons.notPermitted : null;
 }
 
 /** Os caminhos na ordem em que o `rm -r` os visita: os filhos antes do pai. */
@@ -147,7 +134,7 @@ async function wipe(
 
       const directory = ctx.vfs.isDir(path);
       ctx.vfs.remove(path);
-      await say(directory ? `removed directory '${path}'` : `removed '${path}'`);
+      await say(t().rmRemoved(path, directory));
     }
   }
 
@@ -156,13 +143,13 @@ async function wipe(
   // volta, e no meio de setenta linhas de remoção ninguém a leria. É a única
   // liberdade que este comando toma, e ela é sobre *quando* o arquivo nasce —
   // não sobre o que é dito dele, que é verdade: ele existe e não sai.
-  ctx.vfs.writeFile(RECOVERY, RECOVERY_TEXT, false, true);
+  ctx.vfs.writeFile(RECOVERY, recoveryText(), false, true);
 
   // Pelo `/*` o `rm` nunca recebeu este caminho, e não fala do que não lhe
   // deram. Quem entrou por ali acha o sobrevivente com um `ls /`.
   if (!announce) return piped ? ok(fromLines(removed)) : ok();
 
-  const denial = `rm: cannot remove '${RECOVERY}': Operation not permitted`;
+  const denial = t().rmCannotRemove(RECOVERY, t().rmReasons.notPermitted);
   if (piped) return { stdout: fromLines(removed), stderr: denial + '\n', code: 1 };
 
   ctx.term.write(denial + '\n');
@@ -186,7 +173,7 @@ const rm: CommandSpec = {
   async run({ argv, ctx, piped, sudo: elevated }: Invocation) {
     const flags = argv.slice(1).filter((argument) => argument.startsWith('-'));
     const operands = argv.slice(1).filter((argument) => !argument.startsWith('-'));
-    if (operands.length === 0) return fail('rm: missing operand\n', 2);
+    if (operands.length === 0) return fail(t().rmMissingOperand, 2);
 
     const recursive = flags.some((flag) => flag === '--recursive' || /^-[a-zA-Z]*[rR]/.test(flag));
     const force = flags.some((flag) => flag === '--force' || /^-[a-zA-Z]*f/.test(flag));
@@ -202,17 +189,17 @@ const rm: CommandSpec = {
     const total = top.length > 0 && top.every((path) => paths.includes(path));
 
     if (recursive && wholeRoot && !override) {
-      return fail(
-        "rm: it is dangerous to operate recursively on '/'\n" +
-          'rm: use --no-preserve-root to override this failsafe\n',
-      );
+      return fail(t().rmDangerous);
     }
 
     if (recursive && (wholeRoot || total)) {
       // A recusa sai da árvore que está montada: os caminhos são os que existem
       // de fato, não uma lista de /bin e /boot que esta máquina não tem.
       if (!elevated) {
-        return fail(fromLines(top.map((path) => `rm: cannot remove '${path}': Permission denied`)), 1);
+        return fail(
+          fromLines(top.map((path) => t().rmCannotRemove(path, t().rmReasons.permission))),
+          1,
+        );
       }
 
       // Com `/` o comando recebeu a raiz e o RECOVERY.txt está dentro dela; com
@@ -229,21 +216,21 @@ const rm: CommandSpec = {
       const node = ctx.vfs.lookup(path);
 
       if (!node) {
-        if (!force) errors.push(`rm: cannot remove '${shown}': No such file or directory`);
+        if (!force) errors.push(t().rmCannotRemove(shown, t().rmReasons.missing));
         continue;
       }
       if (node.kind === 'dir' && !recursive) {
-        errors.push(`rm: cannot remove '${shown}': Is a directory`);
+        errors.push(t().rmCannotRemove(shown, t().rmReasons.isDir));
         continue;
       }
 
       const stuck = immovable(path);
       if (stuck) {
-        errors.push(`rm: cannot remove '${shown}': ${stuck}`);
+        errors.push(t().rmCannotRemove(shown, stuck));
         continue;
       }
       if (!elevated) {
-        errors.push(`rm: cannot remove '${shown}': Permission denied`);
+        errors.push(t().rmCannotRemove(shown, t().rmReasons.permission));
         continue;
       }
 
@@ -265,14 +252,14 @@ const fortune: CommandSpec = {
     'Pipe it into `cowsay`.',
   run({ ctx }: Invocation) {
     const raw = ctx.vfs.readFile(FORTUNES);
-    if (raw === null) return fail(`fortune: ${FORTUNES}: No such file or directory\n`);
+    if (raw === null) return fail(t().noSuchFile('fortune', FORTUNES));
 
     const quotes = raw
       .split(/^%$/m)
       .map((quote) => quote.replace(/^\n+|\n+$/g, ''))
       .filter((quote) => quote !== '');
 
-    if (quotes.length === 0) return fail('fortune: no fortunes found\n');
+    if (quotes.length === 0) return fail(t().fortuneEmpty);
     return ok(quotes[Math.floor(Math.random() * quotes.length)] + '\n');
   },
 };
@@ -321,7 +308,7 @@ const cowsay: CommandSpec = {
     'The bubble wraps at 40 columns, like the original does.',
   run({ argv, stdin }: Invocation) {
     const text = argv.length > 1 ? argv.slice(1).join(' ') : stdin.replace(/\n$/, '');
-    if (text.trim() === '') return fail('usage: cowsay [text]\n', 2);
+    if (text.trim() === '') return fail(t().usageLine(docs(cowsay).usage), 2);
     return ok(fromLines([...bubble(text), ...COW]));
   },
 };
@@ -335,7 +322,7 @@ const matrix: CommandSpec = {
     'Any key stops it, ctrl+c included. Like `doom` and `top`, it runs in the\n' +
     'alternate screen: when it ends, your shell is exactly where you left it.',
   async run({ ctx, piped }: Invocation) {
-    if (piped) return fail('matrix: this one has to be watched, not piped\n');
+    if (piped) return fail(t().matrixPiped);
     await runMatrix(ctx);
     return ok();
   },
@@ -356,7 +343,7 @@ const crt: CommandSpec = {
   run({ argv, ctx }: Invocation) {
     const argument = argv[1];
     if (argv.length > 2 || (argument !== undefined && argument !== 'on' && argument !== 'off')) {
-      return fail(`usage: ${crt.usage}\n`, 2);
+      return fail(t().usageLine(docs(crt).usage), 2);
     }
 
     const on = argument === undefined ? !ctx.env.crt : argument === 'on';
@@ -366,7 +353,7 @@ const crt: CommandSpec = {
       ctx.savePrefs();
     }
 
-    return ok(on ? 'crt: on\n' : 'crt: off\n');
+    return ok(t().crtState(on));
   },
 };
 

@@ -35,7 +35,9 @@ artefatos vivem versionados em `public/doom/`.
 
 ## Idioma
 
-- Código, identificadores, saída do terminal e mensagens de commit: **inglês**.
+- Código, identificadores e mensagens de commit: **inglês**.
+- Saída do terminal: escrita em **inglês**, no código, e traduzida por cima em
+  `src/i18n/`. O inglês é a fonte; o português é catálogo.
 - Comentários e documentação: **português**.
 - Comentário explica *por quê*. O *o quê* já está no código.
 
@@ -134,12 +136,31 @@ Cada uma destas já custou tempo. Não as reintroduza.
     só os caminhos que recebeu.
 23. **O bloco de apagamento é o último do `test/shell.test.ts`.** Ele derruba a
     árvore de verdade; teste escrito depois dele roda num sistema vazio.
+24. **O locale é global ao módulo, e o `npm test` roda numa sessão só.** Quem
+    chama `setLocale` é o `main.ts` (na restauração das preferências, antes do
+    boot) e o `lang`. No teste isso significa que todo bloco escrito depois do
+    `lang pt` roda em português até alguém voltar para o inglês — o bloco de
+    idioma termina com um `lang en` justamente por isso, e o de apagamento, que
+    vem depois, afere string em inglês.
+25. **Mensagem nova precisa de chave, não de literal.** Uma string escrita
+    direto no `fail()` funciona, passa no build e some do português sem avisar
+    ninguém. O TypeScript só cobra o que está na interface `Messages`, então o
+    que não passa por ela não existe para a tradução.
+26. **Número que aparece na tela passa pelo `fixed()`, não pelo `toFixed()`.**
+    O separador decimal é do idioma: `7.9Gi` em inglês, `7,9Gi` em português. As
+    duas exceções são de propósito — os carimbos do POST do boot, que são do
+    kernel, e nada em `src/doom/` fora do HUD do `--fps`.
 
 ## Adicionar um comando
 
 Escreva um `CommandSpec` (`src/commands/types.ts`) e registre em `registry.ts`. O
 `help`, o `help --all`, o `man` e o `/usr/bin` do filesystem simulado se atualizam
 sozinhos a partir do registro.
+
+Depois traduza: uma entrada em `ptDocs` (`src/i18n/docs.ts`) com `summary`,
+`usage` e `man`, e toda mensagem nova que o comando imprima em
+`src/i18n/messages.ts` (inglês) e `src/i18n/pt.ts` (português). O `npm test`
+cobra a entrada de `ptDocs`; o TypeScript cobra o catálogo de mensagens.
 
 ## Conteúdo
 

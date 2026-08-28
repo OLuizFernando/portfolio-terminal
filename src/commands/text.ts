@@ -1,4 +1,5 @@
 import { expand, resolve } from '../fs/path';
+import { docs, t } from '../i18n';
 import { fail, fromLines, ok, toLines, type CommandSpec, type Invocation, type ShellContext } from './types';
 
 interface Source {
@@ -26,10 +27,10 @@ function gather(
     const path = resolve(ctx.env.cwd, expand(file, ctx.env.home));
     const node = ctx.vfs.lookup(path);
     if (!node) {
-      stderr += `${command}: ${file}: No such file or directory\n`;
+      stderr += t().noSuchFile(command, file);
       code = 1;
     } else if (node.kind === 'dir') {
-      stderr += `${command}: ${file}: Is a directory\n`;
+      stderr += t().isDirectory(command, file);
       code = 1;
     } else {
       sources.push({ label: file, text: node.content });
@@ -48,7 +49,7 @@ function countArg(argv: string[], fallback: number): { count: number; files: str
     const arg = argv[i]!;
     if (arg === '-n') {
       const value = Number(argv[++i]);
-      if (!Number.isFinite(value)) return { count, files, error: 'invalid number of lines\n' };
+      if (!Number.isFinite(value)) return { count, files, error: t().badLineCount };
       count = value;
     } else if (/^-\d+$/.test(arg)) {
       count = Number(arg.slice(1));
@@ -67,7 +68,7 @@ function shortFlags(argv: string[], known: string, command: string) {
   for (const arg of argv.slice(1)) {
     if (arg.length > 1 && arg.startsWith('-') && !arg.startsWith('--')) {
       for (const flag of arg.slice(1)) {
-        if (!known.includes(flag)) return { flags, operands, error: `${command}: invalid option -- '${flag}'\n` };
+        if (!known.includes(flag)) return { flags, operands, error: t().invalidOption(command, flag) };
         flags.add(flag);
       }
     } else {
@@ -89,13 +90,13 @@ const grep: CommandSpec = {
     if (error) return fail(error, 2);
 
     const [pattern, ...files] = operands;
-    if (pattern === undefined) return fail('usage: grep [-i] [-v] [-n] [-c] <pattern> [file...]\n', 2);
+    if (pattern === undefined) return fail(t().usageLine(docs(grep).usage), 2);
 
     let re: RegExp;
     try {
       re = new RegExp(pattern, flags.has('i') ? 'i' : '');
     } catch {
-      return fail(`grep: ${pattern}: invalid regular expression\n`, 2);
+      return fail(t().grepBadRegex(pattern), 2);
     }
 
     const { sources, stderr, code } = gather('grep', files, stdin, ctx);
@@ -204,7 +205,7 @@ const wc: CommandSpec = {
       if (showAll || flags.has('l')) parts.push(String(totals.l).padStart(7));
       if (showAll || flags.has('w')) parts.push(String(totals.w).padStart(7));
       if (showAll || flags.has('c')) parts.push(String(totals.c).padStart(7));
-      out.push(parts.join(' ') + ' total');
+      out.push(parts.join(' ') + ` ${t().wcTotal}`);
     }
 
     return { stdout: fromLines(out), stderr, code };

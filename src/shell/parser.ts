@@ -1,4 +1,5 @@
 import { ShellError, tokenize, type Separator, type Token, type Word } from './lexer';
+import { t } from '../i18n';
 
 export interface Redirect {
   op: '>' | '>>';
@@ -21,7 +22,7 @@ export interface ScriptItem {
 export type Script = ScriptItem[];
 
 const syntaxError = (token: string) =>
-  new ShellError(`bash: syntax error near unexpected token \`${token}'`);
+  new ShellError(t().syntaxNear(token));
 
 /** `cd x && ls | grep y > out` → lista de pipelines encadeadas por operador. */
 export function parse(input: string): Script {

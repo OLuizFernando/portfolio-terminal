@@ -322,9 +322,33 @@ parecer defeito.
 - Comando `lang` alterna em runtime
 - **Nunca troca sozinho** por detecção de navegador — só imprime a dica no boot.
   Trocar automaticamente tira a agência do visitante, que é a alma do projeto.
-- **Só o conteúdo é traduzido.** Comando, flag, mensagem de erro e `man`
-  continuam em inglês — é como se comporta uma máquina com `/home` traduzido e
-  locale em inglês, e é a fronteira que impede o projeto de virar dois projetos.
+- **O idioma vale para a máquina inteira, não só para o conteúdo.** O `help`, os
+  manuais, as mensagens de erro, os rótulos do `free`, do `df` e do `top`, a
+  vírgula decimal e o texto do boot acompanham o `lang`. Era o contrário até
+  2026-08-28: só o conteúdo trocava, e o argumento era que uma máquina com
+  `/home` traduzido e locale em inglês se comporta assim. Se comporta, mas
+  ninguém chega aqui com `LANG=C` por escolha — quem pede português está pedindo
+  a tela em português, e meia tela em inglês lê como tradução pela metade, não
+  como fidelidade ao Unix.
+- **A fronteira agora é outra: nome de comando e flag não se traduzem.** `ls` e
+  `-l` são a interface da máquina, e nenhum locale do mundo mexe neles — o
+  gettext de verdade também não. As linhas de kernel do boot ficam pelo mesmo
+  motivo: saem do kernel, que fala inglês em qualquer idioma. É o que impede o
+  projeto de virar dois projetos.
+- **O inglês mora no código; o português é uma camada por cima.** As strings em
+  inglês continuam no `CommandSpec` e nos comandos, onde são escritas e
+  revisadas. `src/i18n/pt.ts` e `src/i18n/docs.ts` traduzem por cima, e o
+  TypeScript exige o catálogo completo: chave nova em inglês não compila até
+  existir em português. É o arranjo de um `.po`, e pela mesma razão — tradução
+  se revisa lendo a tradução inteira de uma vez, não caçando string por trinta
+  arquivos. A documentação (`summary`, `usage`, `man`) cai no inglês quando
+  falta chave, e um teste cobra a lista completa para que a falta apareça no
+  `npm test` e não na tela do visitante.
+- **O locale é estado de módulo, como numa máquina de verdade.** Nada em `ls`
+  recebe o `LANG` por parâmetro: ele consulta o ambiente. `setLocale` é chamado
+  em dois lugares — a restauração das preferências no `main.ts`, antes do boot,
+  e o `lang`, junto com o `remount`. Trocar a árvore sem trocar o locale deixaria
+  o `cat` respondendo em português e o `help` em inglês.
 - **Os nomes de arquivo são idênticos nos dois idiomas**, e isso carrega peso:
   é o que faz o diretório atual sobreviver à troca. `content/pt/.../degree.txt`,
   nunca `formacao.txt`. Traduzir caminho jogaria o visitante para o home a cada
@@ -743,6 +767,11 @@ src/
 │   ├── glob.ts           expansão segmento a segmento
 │   ├── env.ts            cwd, home, idioma, histórico
 │   └── executor.ts       encadeia pipes, aplica redirects
+├── i18n/
+│   ├── messages.ts       a interface `Messages` e o catálogo em inglês (a fonte)
+│   ├── pt.ts             o catálogo em português, completo por exigência do tipo
+│   ├── docs.ts           tradução de `summary`, `usage` e `man`, por comando
+│   └── index.ts          o locale do processo: `setLocale`, `t()`, `docs()`, `fixed()`
 ├── commands/
 │   ├── types.ts          contrato de comando (argv, stdin, piped) → stdout
 │   ├── registry.ts       registro + geração de /usr/bin
@@ -875,6 +904,8 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
       2026-08-27, do release oficial e não do Google Fonts (ver 2.2)
 - [x] Deploy: instalado no Pi, com o `deploy-portfolio` versionado — concluído em
       2026-08-27
+- [x] O shell traduzido junto com o conteúdo — concluído em 2026-08-28: `src/i18n/`,
+      o `lang` passou a trocar `help`, `man`, erros, rótulos e boot (ver 2.6)
 
 ### Critério de publicação
 

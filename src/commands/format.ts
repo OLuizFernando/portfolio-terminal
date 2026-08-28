@@ -1,6 +1,6 @@
 import type { FsNode } from '../fs/types';
+import { t } from '../i18n';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const SIX_MONTHS = 15552000; // segundos
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -9,7 +9,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 export function formatDate(mtime: number, now = Math.floor(Date.now() / 1000)): string {
   const date = new Date(mtime * 1000);
   const day = String(date.getDate()).padStart(2, ' ');
-  const month = MONTHS[date.getMonth()]!;
+  const month = t().months[date.getMonth()]!;
   if (now - mtime > SIX_MONTHS) return `${month} ${day}  ${date.getFullYear()}`;
   return `${month} ${day} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

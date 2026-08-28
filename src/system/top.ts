@@ -8,6 +8,7 @@
 
 import type { ShellContext } from '../commands/types';
 import { clock, cpuTimePlus, load, mib, table, uptimeShort } from './format';
+import { fixed, t } from '../i18n';
 import type { Stats } from './stats';
 
 /** O servidor cacheia por 2s. Repintar mais rápido mostraria o mesmo snapshot. */
@@ -18,16 +19,13 @@ const CHROME_ROWS = 8;
 
 function header(stats: Stats): string[] {
   const { mem, cpu } = stats;
-  const temperature = cpu.tempC === null ? '' : `,  temp ${cpu.tempC.toFixed(1)}C`;
 
   return [
-    `top - ${clock()} up ${uptimeShort(stats.uptimeSec)},  load average: ${load(stats.load.avg)}`,
-    `Tasks: ${stats.load.total} total, ${stats.load.running} running`,
-    `%Cpu(s): ${cpu.usagePct.toFixed(1)} us${temperature}`,
-    `MiB Mem : ${mib(mem.totalKb)} total, ${mib(mem.freeKb)} free, ` +
-      `${mib(mem.usedKb)} used, ${mib(mem.buffCacheKb)} buff/cache`,
-    `MiB Swap: ${mib(mem.swapTotalKb)} total, ${mib(mem.swapFreeKb)} free, ` +
-      `${mib(mem.swapUsedKb)} used. ${mib(mem.availableKb)} avail Mem`,
+    t().topFirstLine(clock(), uptimeShort(stats.uptimeSec), load(stats.load.avg)),
+    t().topTasks(stats.load.total, stats.load.running),
+    t().topCpu(fixed(cpu.usagePct, 1), cpu.tempC === null ? null : fixed(cpu.tempC, 1)),
+    t().topMem(mib(mem.totalKb), mib(mem.freeKb), mib(mem.usedKb), mib(mem.buffCacheKb)),
+    t().topSwap(mib(mem.swapTotalKb), mib(mem.swapFreeKb), mib(mem.swapUsedKb), mib(mem.availableKb)),
     '',
   ];
 }
@@ -36,12 +34,12 @@ function body(stats: Stats, rows: number): string[] {
   const visible = stats.processes.slice(0, Math.max(rows, 0));
   const table_ = table(
     [
-      ['PID', 'USER', '%CPU', '%MEM', 'RES', 'S', 'TIME+', 'COMMAND'],
+      t().topColumns,
       ...visible.map((process) => [
         String(process.pid),
         process.user,
-        process.cpuPct.toFixed(1),
-        process.memPct.toFixed(1),
+        fixed(process.cpuPct, 1),
+        fixed(process.memPct, 1),
         String(process.rssKb),
         process.state,
         cpuTimePlus(process.timeSec),
@@ -86,7 +84,7 @@ export async function runTop(ctx: ShellContext): Promise<void> {
       ...header(stats),
       ...body(stats, term.rows - CHROME_ROWS),
       '',
-      stats.synthetic ? 'synthetic data — press q to quit' : 'press q to quit',
+      t().topQuit(stats.synthetic),
     ];
 
     // `\x1b[H` volta ao topo e cada linha se apaga sozinha com `\x1b[K`: repintar

@@ -272,7 +272,7 @@ const neofetch = needsMachine(
     man:
       'The machine you are talking to, described by itself.\n\n' +
       'Every number here was read from /proc a moment ago. The temperature is\n' +
-      'the actual temperature of a board on a shelf in Brazil.',
+      'the actual temperature of a board on a desk in Brazil.',
   },
   (stats, _flags, { ctx, piped }) => {
     const info = neofetchLines(stats, ctx.env.user, ctx.env.host);

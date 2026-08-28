@@ -1,4 +1,4 @@
-Você está dentro de um Raspberry Pi 5 Model B (8GB) em cima de uma prateleira em São Paulo, Brasil.
+Você está dentro de um Raspberry Pi 5 Model B (8GB) em cima de uma mesa em São Paulo, SP.
 Ele serve esta página, e tudo que você está prestes a ler.
 
 Não existe interface. Nunca existiu. Só arquivos.

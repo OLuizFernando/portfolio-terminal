@@ -349,6 +349,12 @@ parecer defeito.
   em dois lugares — a restauração das preferências no `main.ts`, antes do boot,
   e o `lang`, junto com o `remount`. Trocar a árvore sem trocar o locale deixaria
   o `cat` respondendo em português e o `help` em inglês.
+- **O texto localiza, não só traduz.** Onde o inglês diz que a máquina está
+  _in Brazil_, o português diz _em São Paulo_, e isso não é divergência a
+  corrigir: quem lê em inglês provavelmente está fora do país, e o país é a
+  unidade que diz alguma coisa a ele; quem trocou para português provavelmente
+  está no Brasil, e "numa mesa, no Brasil" não informa nada. A tradução literal
+  seria pior nos dois lados.
 - **Os nomes de arquivo são idênticos nos dois idiomas**, e isso carrega peso:
   é o que faz o diretório atual sobreviver à troca. `content/pt/.../degree.txt`,
   nunca `formacao.txt`. Traduzir caminho jogaria o visitante para o home a cada

@@ -1,4 +1,4 @@
-You are inside a Raspberry Pi 5 Model B (8GB) sitting on a shelf in São Paulo, Brazil.
+You are inside a Raspberry Pi 5 Model B (8GB) sitting on a desk in São Paulo, Brazil.
 It serves this page, and everything you are about to read.
 
 There is no interface. There never was. Just files.

@@ -45,6 +45,14 @@ const ctx: ShellContext = {
   savePrefs: () => {
     terminal.prefsSalvas++;
   },
+  langs: Object.keys(langs),
+  // Espelha o que o main faz: a árvore nova não traz /usr/bin nem /proc, que
+  // são montados por cima. Sem refazê-los aqui, o teste não veria a regressão.
+  remount: (lang) => {
+    vfs.remount(structuredClone(langs[lang] as DirNode));
+    mountUsrBin(vfs, registry);
+    mountProc(vfs);
+  },
   term: {
     clear: () => {},
     write: () => {},
@@ -461,6 +469,30 @@ if (c3.replacement !== '~/projects/') {
   failures++;
   console.error(`FAIL  complete("cat ~/proj") -> ${JSON.stringify(c3)}`);
 } else console.log('ok    complete: cat ~/proj -> ~/projects/');
+
+// --- lang ---------------------------------------------------------------
+
+await check('lang', (o) => o.startsWith('en (available:') && o.includes('pt'), 'lang: atual e disponíveis');
+await check('lang xx', has('no such language: xx', 'available:'), 'lang: código inexistente');
+await check('lang en pt', has('usage: lang'), 'lang: argumento a mais');
+await check('lang en', (o) => o === 'en\n', 'lang: trocar para o idioma atual é no-op');
+
+env.cwd = '/home/guest/education';
+await check(
+  'lang pt',
+  (o) => o === 'pt\n' && env.cwd === '/home/guest/education',
+  'lang pt troca a árvore preservando o cwd',
+);
+await check('ls', has('degree.txt', 'courses.txt'), 'os nomes de arquivo são iguais nos dois idiomas');
+await check('cat degree.txt', (o) => /[ãõçáéíóúê]/i.test(o), 'o conteúdo montado está em português');
+await check('ls /usr/bin', has('lang', 'doom', 'ls'), '/usr/bin sobrevive à remontagem');
+await check('ls /proc', has('cpuinfo', 'meminfo'), '/proc sobrevive à remontagem');
+
+// Uma tradução incompleta não pode deixar a sessão presa num diretório morto.
+env.cwd = '/home/guest/nao-existe';
+await check('lang en', (o) => o === 'en\n' && env.cwd === env.home, 'lang: cwd órfão cai no home');
+
+env.cwd = env.home;
 
 console.log(`\n${count - failures}/${count} passaram`);
 if (failures > 0) process.exit(1);

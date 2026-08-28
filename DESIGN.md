@@ -171,8 +171,7 @@ acessibilidade básica.
 `whoami`, `uname -a`, `uptime`, `date`, `neofetch`, `free`, `df`, `ps`, `top`
 
 **Camada 4 — personalidade (escolhida em 2026-08-27):**
-`doom`, `sudo`, `rm -rf /`, `cowsay`, `fortune`, `matrix`, `crt`, `stats` — e
-`lang`, que ainda depende do conteúdo em português.
+`doom`, `sudo`, `rm -rf /`, `cowsay`, `fortune`, `matrix`, `crt`, `stats`, `lang`.
 
 Ficaram de fora, e por quê:
 
@@ -215,8 +214,10 @@ idêntico ao texto completo.
 
 **Sem tela de login.** Sem BIOS elaborado. O boot termina em `~`.
 
-> **A dica de idioma (item 5) ficou para a fase 4**, junto do comando `lang`.
-> Anunciar `lang pt` antes de ele existir seria pior do que não anunciar.
+> **A dica de idioma (item 5) chegou na fase 4**, junto do comando `lang` —
+> anunciar `lang pt` antes de ele existir seria pior do que não anunciar. Ela só
+> aparece para navegador em pt que ainda não esteja em português: oferecer a
+> alguém o idioma que ele já está lendo é ruído.
 
 **O banner mora fora do código**, em `art/banner*.txt`, e vira JSON no build. Num
 `.ts` seria preciso escapar barra invertida e crase a cada troca — e a maioria
@@ -240,6 +241,17 @@ parecer defeito.
 - Comando `lang` alterna em runtime
 - **Nunca troca sozinho** por detecção de navegador — só imprime a dica no boot.
   Trocar automaticamente tira a agência do visitante, que é a alma do projeto.
+- **Só o conteúdo é traduzido.** Comando, flag, mensagem de erro e `man`
+  continuam em inglês — é como se comporta uma máquina com `/home` traduzido e
+  locale em inglês, e é a fronteira que impede o projeto de virar dois projetos.
+- **Os nomes de arquivo são idênticos nos dois idiomas**, e isso carrega peso:
+  é o que faz o diretório atual sobreviver à troca. `content/pt/.../degree.txt`,
+  nunca `formacao.txt`. Traduzir caminho jogaria o visitante para o home a cada
+  `lang`, e quebraria todo Tab-completion que ele já tivesse aprendido.
+- **Remontar leva junto o que não veio do manifesto.** `/usr/bin`, `/proc` e o
+  `~/.bash_history` são montados por cima da árvore; trocar a árvore sem
+  refazê-los deixa o visitante sem comandos listados e sem histórico. O
+  `ShellContext.remount` existe justamente para concentrar isso num lugar só.
 
 ### 2.7 Mobile
 
@@ -769,9 +781,9 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 - [x] Conteúdo real escrito em inglês — concluído em 2026-08-27: `about.txt`,
       `education/`, `experience/`, `projects/` e o `/var/log/career.log`
 
-### Fase 4 — Polimento
+### Fase 4 — Polimento ✅ concluída em 2026-08-27
 
-- [ ] Conteúdo em português + comando `lang`
+- [x] Conteúdo em português + comando `lang` — concluído em 2026-08-27
 - [x] Suporte a toque: barra de chips, fonte menor, `neofetch` sem arte em tela
       estreita — concluído em 2026-08-27
 - [x] Telemetria + comando `stats` — concluído em 2026-08-27, com `/etc/privacy`
@@ -791,8 +803,7 @@ Não há lançamento parcial.
 
 ## 6. Pendências em aberto
 
-- Escrever o conteúdo em português e ligar o comando `lang` — é o último item
-  aberto da fase 4, e depende do conteúdo em inglês existir primeiro
-- As frases do `fortune` são um chute inicial em `content/en/usr/share/fortunes`:
-  trocar por frases que o Luiz de fato queira citar
+- As frases do `fortune` são um chute inicial, agora em dois idiomas
+  (`content/en/usr/share/fortunes` e o `pt`): trocar por frases que o Luiz de
+  fato queira citar, nos dois arquivos
 - Decidir se o DOOM tem som (hoje é compilado sem)

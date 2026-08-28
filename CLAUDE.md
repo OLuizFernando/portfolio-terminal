@@ -109,7 +109,15 @@ Cada uma destas já custou tempo. Não as reintroduza.
 18. **A chave do rate limit é o `CF-Connecting-IP`.** Atrás do túnel, o
     `remote_addr` é 127.0.0.1 para o mundo inteiro; limitar por ele limita todo
     mundo junto na primeira rajada de uma pessoa só.
-19. **A telemetria guarda a primeira palavra e nada mais**, e o `/etc/privacy`
+19. **`vfs.remount()` descarta os pontos de montagem sintéticos.** `/usr/bin`,
+    `/proc` e o `~/.bash_history` não vêm do manifesto — são escritos por cima
+    depois. Trocar a árvore pelo `lang` sem refazer os três deixa `ls /usr/bin`
+    vazio e o histórico do visitante inacessível. Quem centraliza isso é o
+    `remount` do `ShellContext`, em `src/main.ts`.
+20. **Os nomes de arquivo são iguais em `content/en/` e `content/pt/`.** É o que
+    permite o `lang` preservar o diretório atual. Traduzir um nome de caminho
+    manda o visitante de volta para o home toda vez que ele troca de idioma.
+21. **A telemetria guarda a primeira palavra e nada mais**, e o `/etc/privacy`
     promete isso por escrito. Mudar o que `src/system/telemetry.ts` manda sem
     mudar o arquivo transforma o texto numa mentira publicada.
 

@@ -36,6 +36,16 @@ export interface ShellContext {
   system: SystemClient;
   /** Grava as preferências da sessão (idioma, fonte) no navegador. */
   savePrefs(): void;
+  /** Idiomas que o manifesto trouxe. O `lang` só aceita um destes. */
+  readonly langs: string[];
+  /**
+   * Troca a árvore montada pela do idioma pedido.
+   *
+   * Quem implementa precisa refazer os pontos de montagem sintéticos —
+   * `/usr/bin`, `/proc` e o `~/.bash_history` não vêm do manifesto e vão embora
+   * junto com a árvore antiga.
+   */
+  remount(lang: string): void;
 }
 
 export interface CommandResult {

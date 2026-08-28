@@ -19,6 +19,9 @@ import { firstWord, Telemetry } from './system/telemetry';
 
 const manifest = rawManifest as unknown as Manifest;
 
+/** Os idiomas que o build encontrou em `content/`. O `lang` só aceita estes. */
+const LANGS = Object.keys(manifest.langs);
+
 /** Clona a árvore do manifesto: o filesystem aceita escrita e não pode sujar o original. */
 function mount(lang: string): DirNode {
   const root = manifest.langs[lang] ?? Object.values(manifest.langs)[0];
@@ -35,7 +38,10 @@ function main(): void {
   env.defaultFontSize = isTouch() ? TOUCH_FONT_SIZE : DEFAULT_FONT_SIZE;
 
   const prefs = loadPrefs(env.defaultFontSize);
-  env.lang = prefs.lang;
+  // Uma preferência guardada pode apontar para um idioma que saiu do build. O
+  // `mount` já cai no primeiro; o `env` precisa concordar com ele, senão o
+  // `lang` mostraria um idioma que não é o que está na tela.
+  env.lang = LANGS.includes(prefs.lang) ? prefs.lang : (LANGS[0] ?? 'en');
   env.fontSize = prefs.fontSize;
   env.crt = prefs.crt;
   env.history = loadHistory();
@@ -92,6 +98,16 @@ function main(): void {
     registry,
     system,
     savePrefs: () => savePrefs({ lang: env.lang, fontSize: env.fontSize, crt: env.crt }),
+    langs: LANGS,
+    // Trocar a árvore leva junto o que não veio do manifesto: `/usr/bin`, o
+    // `/proc` e o `~/.bash_history` são montados por cima e precisam ser
+    // refeitos, ou o `lang` deixaria o visitante sem comandos e sem histórico.
+    remount: (lang) => {
+      vfs.remount(mount(lang));
+      mountUsrBin(vfs, registry);
+      mountProc(vfs);
+      syncBashHistory();
+    },
   };
 
   const editor = new LineEditor(handle.term, {
@@ -143,7 +159,17 @@ function main(): void {
 
   handle.term.focus();
 
+  // O navegador é consultado uma vez, só para decidir se vale oferecer. Quem
+  // troca é o visitante (DESIGN.md 2.6): detecção automática tiraria dele a
+  // agência que é a alma do projeto.
+  const speaksPt = navigator.language?.toLowerCase().startsWith('pt') ?? false;
+  const langHint =
+    speaksPt && LANGS.includes('pt') && env.lang !== 'pt'
+      ? "dica: execute 'lang pt' para português"
+      : undefined;
+
   void runBoot({
+    langHint,
     output: {
       print: (text) => handle.print(text),
       get cols() {

@@ -96,11 +96,17 @@ function systemBlock(stats: Stats | null): string[] {
 export interface BootOptions {
   output: BootOutput;
   system: SystemClient;
+  /**
+   * A dica de idioma, ou nada. Quem decide é o main, olhando o navegador — o
+   * boot só imprime. O idioma nunca troca sozinho (2.6): a dica oferece, e
+   * quem escolhe é o visitante.
+   */
+  langHint?: string | undefined;
   /** Registra o cancelador de "qualquer tecla pula". */
   onSkippable: (skip: () => void) => () => void;
 }
 
-export async function runBoot({ output, system, onSkippable }: BootOptions): Promise<void> {
+export async function runBoot({ output, system, onSkippable, langHint }: BootOptions): Promise<void> {
   const clock = new Clock();
   const release = onSkippable(() => {
     clock.skipped = true;
@@ -143,6 +149,11 @@ export async function runBoot({ output, system, onSkippable }: BootOptions): Pro
     line('This is a portfolio with no interface. It has a shell instead.');
     await clock.wait(150);
     line();
+    if (langHint) {
+      line(langHint);
+      await clock.wait(150);
+      line();
+    }
     line("Type 'help' for the handful of commands, or 'ls' to just look around.");
 
     line();

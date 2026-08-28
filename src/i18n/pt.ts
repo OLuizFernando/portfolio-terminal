@@ -57,7 +57,6 @@ export const pt: Messages = {
 
   crtState: (on) => (on ? "crt: ligado\n" : "crt: desligado\n"),
   matrixPiped: "matrix: esta aqui é para assistir, não para canalizar\n",
-  fortuneEmpty: "fortune: nenhuma frase encontrada\n",
 
   doomNeedsKeyboard: "doom: precisa de teclado: setas, ctrl e espaço ao mesmo tempo.\n" + "Volte de um computador e ele estará aqui.\n",
   doomLoading: "carregando DOOM (uns 4MB, uma vez só)...\n",

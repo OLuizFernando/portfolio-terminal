@@ -2,7 +2,7 @@
  * Camada 4: personalidade.
  *
  * A régua para entrar aqui é a densidade, não a quantidade — cada piada
- * mal-acabada enfraquece as boas. São seis, e todas se comportam como comando de
+ * mal-acabada enfraquece as boas. São cinco, e todas se comportam como comando de
  * verdade: respeitam pipe, código de saída e `man`.
  */
 
@@ -20,9 +20,6 @@ import { runMatrix } from '../terminal/matrix';
 import { wrap } from '../system/format';
 import { resolve } from '../fs/path';
 import type { Vfs } from '../fs/vfs';
-
-/** Onde o `fortune` procura as frases. Arquivo de verdade na árvore simulada. */
-const FORTUNES = '/usr/share/fortunes';
 
 const sudo: CommandSpec = {
   name: 'sudo',
@@ -241,29 +238,6 @@ const rm: CommandSpec = {
   },
 };
 
-const fortune: CommandSpec = {
-  name: 'fortune',
-  summary: 'print a random aphorism',
-  usage: 'fortune',
-  man:
-    'Prints one of the epigrams in ' + FORTUNES + ', at random.\n\n' +
-    'It is a real file. `cat` it and you get the whole collection, separated by\n' +
-    '% on a line of its own, which is the format fortune has used since 1979.\n\n' +
-    'Pipe it into `cowsay`.',
-  run({ ctx }: Invocation) {
-    const raw = ctx.vfs.readFile(FORTUNES);
-    if (raw === null) return fail(t().noSuchFile('fortune', FORTUNES));
-
-    const quotes = raw
-      .split(/^%$/m)
-      .map((quote) => quote.replace(/^\n+|\n+$/g, ''))
-      .filter((quote) => quote !== '');
-
-    if (quotes.length === 0) return fail(t().fortuneEmpty);
-    return ok(quotes[Math.floor(Math.random() * quotes.length)] + '\n');
-  },
-};
-
 /** Largura do balão antes de quebrar a linha, como no cowsay original. */
 const BUBBLE = 40;
 
@@ -303,8 +277,8 @@ const cowsay: CommandSpec = {
   man:
     'A cow says it.\n\n' +
     'With arguments, it says those. Without, it says whatever it is fed:\n\n' +
-    '  fortune | cowsay\n' +
-    '  cat about.txt | cowsay\n\n' +
+    '  cat about.txt | cowsay\n' +
+    '  neofetch | grep Temp | cowsay\n\n' +
     'The bubble wraps at 40 columns, like the original does.',
   run({ argv, stdin }: Invocation) {
     const text = argv.length > 1 ? argv.slice(1).join(' ') : stdin.replace(/\n$/, '');
@@ -357,4 +331,4 @@ const crt: CommandSpec = {
   },
 };
 
-export const funCommands: CommandSpec[] = [sudo, rm, fortune, cowsay, matrix, crt];
+export const funCommands: CommandSpec[] = [sudo, rm, cowsay, matrix, crt];

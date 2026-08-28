@@ -178,15 +178,10 @@ export const ptDocs: Record<string, CommandDocs> = {
     man: "Roda um comando como root, e ele roda como root mesmo.\n\n" + "Não há senha, porque não há aqui nada que valha uma. Você é convidado\n" + "numa máquina que não é sua, mas tudo o que este shell alcança é uma\n" + "cópia entregue ao seu navegador no boot. Quebre e você quebra a sua\n" + "própria aba, e o Raspberry Pi nunca fica sabendo.\n\n" + "A maioria dos comandos não liga se você usou sudo. Exatamente um liga, e\n" + "ele não está em lista nenhuma.",
   },
   rm: { summary: "remove arquivos e diretórios", usage: "rm [-rf] <caminho>..." },
-  fortune: {
-    summary: "imprime um aforismo ao acaso",
-    usage: "fortune",
-    man: "Imprime um dos epigramas de /usr/share/fortunes, ao acaso.\n\n" + "É um arquivo de verdade. Dê um `cat` nele e você tem a coleção inteira,\n" + "separada por % numa linha só, que é o formato que o fortune usa desde 1979.\n\n" + "Jogue num `cowsay`.",
-  },
   cowsay: {
     summary: "uma vaca fala o que você falar",
     usage: "cowsay [texto]",
-    man: "Uma vaca fala.\n\n" + "Com argumento, ela fala aquilo. Sem, ela fala o que for dado a ela:\n\n" + "  fortune | cowsay\n" + "  cat about.txt | cowsay\n\n" + "O balão quebra em 40 colunas, como o original.",
+    man: "Uma vaca fala.\n\n" + "Com argumento, ela fala aquilo. Sem, ela fala o que for dado a ela:\n\n" + "  cat about.txt | cowsay\n" + "  neofetch | grep Temp | cowsay\n\n" + "O balão quebra em 40 colunas, como o original.",
   },
   matrix: {
     summary: "siga o coelho branco",

@@ -1,0 +1,38 @@
+# /etc/fstab: where every part of this machine comes from.
+#
+# Nothing below is a disk. The tree you are standing in was handed to your
+# browser at boot and lives in the memory of this tab, which is why `rm -rf /`
+# is survivable and why everything you write is gone on reload.
+
+# <source>       <mount point>              <type>     <options>
+manifest.json    /                          memfs      rw,volatile,lang=en
+registry         /usr/bin                   autofs     ro,generated
+pi:/api          /proc                      nfs        ro,soft,synthetic-ok
+localStorage     /home/guest/.bash_history  browserfs  rw,persistent
+
+
+NOTES
+
+manifest.json
+    Every .txt you can `cat` was written in the repository, under content/en
+    or content/pt, and baked into the JavaScript at build time. That is also
+    where `ls -l` gets its dates: the mtime of a file is the date of the last
+    commit that touched it. Remounting is what `lang` does -- same tree, other
+    language, same paths, so you keep the directory you were standing in.
+
+registry
+    /usr/bin is not a directory anyone maintains. It is written at boot from
+    the list of commands that actually exist, so it cannot drift from `help`.
+
+pi:/api
+    /proc is the only mount that leaves your browser. Uptime, temperature,
+    memory, disks and processes are read from the real /proc of the Raspberry
+    Pi answering you, over HTTPS, when you ask for them. If that machine is
+    down, the commands say so instead of inventing a number. If it is up but
+    not Linux -- when I run this on a laptop -- the reply is marked
+    `synthetic: true` and the terminal prints the warning.
+
+localStorage
+    Your history and your preferences, font size and CRT, are written by this
+    browser and read by this browser. They are never sent anywhere. Clearing
+    this site's data removes them. See /etc/privacy.

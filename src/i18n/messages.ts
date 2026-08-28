@@ -64,10 +64,9 @@ export interface Messages {
   langCurrent(lang: string, available: string): string;
   langNoSuch(target: string, available: string): string;
 
-  // --- crt, matrix, fortune ------------------------------------------------
+  // --- crt, matrix ---------------------------------------------------------
   crtState(on: boolean): string;
   matrixPiped: string;
-  fortuneEmpty: string;
 
   // --- doom ----------------------------------------------------------------
   doomNeedsKeyboard: string;
@@ -209,7 +208,6 @@ export const en: Messages = {
 
   crtState: (on) => (on ? 'crt: on\n' : 'crt: off\n'),
   matrixPiped: 'matrix: this one has to be watched, not piped\n',
-  fortuneEmpty: 'fortune: no fortunes found\n',
 
   doomNeedsKeyboard:
     'doom: needs a keyboard: arrows, ctrl and space at the same time.\n' +

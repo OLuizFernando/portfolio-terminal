@@ -129,7 +129,11 @@ arquivos que ele deixou lá.
 
 Fora da home (easter eggs):
 
-- `/etc/motd`
+- `/etc/fstab` — de onde vem cada parte da árvore, no formato do fstab
+- `/etc/privacy` — o que a telemetria guarda, por escrito (ver 4.4)
+- `/etc/os-release` — versão e commit deste build, gerado (ver 3.4)
+- `/usr/share/doc/portfolio/COLOPHON` — do que o site é feito e o que custa
+- `/usr/share/doc/portfolio/CHANGELOG` — o `git log` do repositório, gerado (ver 3.4)
 - `/var/log/career.log` — trajetória em formato de log com timestamps
 - `/proc/cpuinfo`, `/proc/meminfo` — **dados reais do Pi**
 - `/usr/bin/` — lista todos os comandos existentes
@@ -187,7 +191,7 @@ acessibilidade básica.
 `whoami`, `uname -a`, `uptime`, `date`, `neofetch`, `free`, `df`, `ps`, `top`
 
 **Camada 4 — personalidade (escolhida em 2026-08-27):**
-`doom`, `sudo`, `rm -rf /`, `cowsay`, `fortune`, `matrix`, `crt`, `stats`, `lang`.
+`doom`, `sudo`, `rm -rf /`, `cowsay`, `matrix`, `crt`, `stats`, `lang`.
 
 Ficaram de fora, e por quê:
 
@@ -218,8 +222,8 @@ disk."_ Foi jogada fora inteira, por dois motivos que se somam:
 
 - **Os caminhos eram inventados.** Esta máquina não tem `/bin`, nem `/boot`, nem
   `/dev`. O único comando do site que fabricava saída era justamente o que
-  fingia destruir — enquanto o `free` marca `synthetic: true` e o `/etc/motd`
-  promete por escrito que nada aqui é maquete.
+  fingia destruir — enquanto o `free` marca `synthetic: true` e o `/etc/fstab`
+  declara por escrito o que é medido e o que não é.
 - **A piada se explicava.** Era o único lugar em que a máquina saía do
   personagem para tranquilizar quem estava do outro lado. Quem digitou
   `--no-preserve-root` inteiro sabia o que estava fazendo, e levou uma piscadela.
@@ -748,6 +752,15 @@ email, sem formulário, sem captcha.
 simulado. Um script no build varre a pasta e gera o manifesto que o terminal carrega.
 Escrever conteúdo novo = criar um `.txt` e commitar.
 
+Dois arquivos fogem da regra e são **gerados** pelo `build-fs.mjs`, iguais nos dois
+idiomas: o `/etc/os-release`, com a data e o commit do build, e o
+`/usr/share/doc/portfolio/CHANGELOG`, que é o `git log` do repositório. Eles descrevem
+o build que os gerou — escrever isso à mão seria escrever mentira com data de
+validade. São iguais nos dois idiomas porque um é formato de máquina e o outro é
+mensagem de commit, que este repositório escreve em inglês. Fora de um checkout do
+git nenhum dos dois entra na árvore: arquivo com data inventada seria pior do que
+arquivo nenhum.
+
 > **Detalhe que faz a ilusão parar de pé:** usar a **data do último commit git de cada
 > arquivo** como timestamp do filesystem simulado. Assim `ls -l` mostra datas
 > verdadeiras.
@@ -852,7 +865,7 @@ src/
 │   ├── text.ts           ferramentas de texto
 │   ├── doom.ts           o comando `doom`
 │   ├── font.ts           o comando `font`
-│   ├── fun.ts           camada 4: sudo, rm, fortune, cowsay, matrix, crt
+│   ├── fun.ts           camada 4: sudo, rm, cowsay, matrix, crt
 │   ├── stats.ts         o comando `stats`
 │   ├── flags.ts          parsing de flags curtas, compartilhado
 │   └── system.ts         camada 3: uname, uptime, free, df, ps, neofetch, top
@@ -969,9 +982,11 @@ capturar o teclado no `window`. Nenhuma das duas aparece em tutorial nenhum.
 - [x] Suporte a toque: barra de chips, fonte menor, `neofetch` sem arte em tela
       estreita — concluído em 2026-08-27
 - [x] Telemetria + comando `stats` — concluído em 2026-08-27, com `/etc/privacy`
-- [x] Easter eggs: `sudo`, `rm -rf /`, `cowsay`, `fortune`, `matrix`, `crt` —
+- [x] Easter eggs: `sudo`, `rm -rf /`, `cowsay`, `matrix`, `crt` —
       concluído em 2026-08-27; o `sudo` e o `rm` foram reescritos no mesmo dia
-      para apagar de verdade, com `reboot` e `/RECOVERY.txt` (ver 2.4)
+      para apagar de verdade, com `reboot` e `/RECOVERY.txt` (ver 2.4). O
+      `fortune` saiu em 2026-08-28, junto do `/etc/motd`: os dois eram texto
+      genérico onde cabia texto sobre esta máquina (ver 2.3 e 3.4)
 - [x] Auto-hospedar JetBrains Mono (Regular + Bold, `.woff2`) — concluído em
       2026-08-27, do release oficial e não do Google Fonts (ver 2.2)
 - [x] Deploy: instalado no Pi, com o `deploy-portfolio` versionado — concluído em
@@ -988,7 +1003,4 @@ Não há lançamento parcial.
 
 ## 6. Pendências em aberto
 
-- As frases do `fortune` são um chute inicial, agora em dois idiomas
-  (`content/en/usr/share/fortunes` e o `pt`): trocar por frases que o Luiz de
-  fato queira citar, nos dois arquivos
 - Decidir se o DOOM tem som (hoje é compilado sem)

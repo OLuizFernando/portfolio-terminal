@@ -147,7 +147,10 @@ await check('cat /tmp/a.txt | sort | uniq -c', has('1 b', '1 c'));
 await check('grep -c . README.txt', (o) => Number(o.trim()) > 3);
 await check('find . -name "*.txt" -type f', has('./README.txt', './projects/portfolio-terminal/stack.txt'));
 await check('ls /usr/bin', has('grep', 'ls', 'tree'));
-await check('cat /etc/motd', has("someone's house"));
+await check('cat /etc/fstab', has('manifest.json', 'browserfs', '/proc'));
+await check('grep BUILD_ID /etc/os-release', has('BUILD_ID='));
+await check('cat /usr/share/doc/portfolio/COLOPHON', has('Raspberry Pi 5', 'doomgeneric'));
+await check('tail -n 1 /usr/share/doc/portfolio/CHANGELOG', (o) => o.trim().length > 10);
 await check('cat /var/log/career.log', has('career: boot'));
 
 await check('help', has('the essentials', 'help --all'));
@@ -333,11 +336,9 @@ await check(
   'sudo rm apaga o arquivo de verdade',
 );
 
-await check('fortune', (o) => o.trim().length > 10);
-await check('fortune | wc -l', (o) => Number(o.trim()) >= 1, 'fortune | wc -l');
 await check('cowsay hello', has('< hello >', '(oo)'));
 await check('cowsay', has('usage: cowsay'));
-await check('fortune | cowsay', has('(oo)', '||----w |'), 'fortune | cowsay');
+await check('cat README.txt | cowsay', has('(oo)', '||----w |'), 'cat | cowsay');
 await check('echo um | cowsay', has('< um >'));
 await check('matrix | cat', has('watched, not piped'));
 
@@ -355,7 +356,9 @@ await check('crt off', (o) => o === 'crt: off\n' && env.crt === false && termina
 await check('crt maybe', has('usage: crt'));
 
 // O `rm` é reação, não comando: fica fora de toda listagem, como o ~/.secret.
-await check('help --all', has('sudo', 'cowsay', 'fortune', 'matrix', 'crt', 'stats'));
+await check('help --all', has('sudo', 'cowsay', 'matrix', 'crt', 'stats'));
+await check('help --all', lacks('fortune'), 'o fortune saiu do help --all');
+await check('fortune', has('bash: fortune: command not found'), 'o fortune saiu da máquina');
 await check('help --all', lacks(' rm '), 'help --all esconde o rm');
 await check('ls /usr/bin', lacks('rm'), '/usr/bin esconde o rm');
 
@@ -596,7 +599,7 @@ await check('free', has('não consigo falar com a máquina'), 'camada 3 offline 
 // locale do mundo mexe neles. O resumo ao lado, sim.
 await check(
   'help --all',
-  has('doom', 'jogar DOOM', 'fortune', 'neofetch'),
+  has('doom', 'jogar DOOM', 'cowsay', 'neofetch'),
   'nome do comando em inglês, resumo em português',
 );
 

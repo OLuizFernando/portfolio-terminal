@@ -1,0 +1,70 @@
+COLOFÃO
+=======
+
+Do que este site é feito, e o que custa manter ele te respondendo.
+
+
+A MÁQUINA
+
+Um Raspberry Pi 5 com 8GB de memória, numa mesa no Brasil, ligado numa conexão
+doméstica. O nginx serve os arquivos estáticos e faz proxy de /api para um
+uvicorn em 127.0.0.1:8000; um túnel do Cloudflare é o que coloca isso tudo na
+internet sem abrir porta no roteador.
+
+Essa é a conta de hospedagem inteira. O `neofetch` e o `top` leem aquela placa.
+
+
+O TERMINAL
+
+xterm.js com o renderizador WebGL, Vite e TypeScript, e nenhum framework --
+não há estado de interface para um React administrar, porque não há interface.
+O parser de ANSI, a seleção de texto, a quebra de linha e o cursor vêm de graça
+com o xterm.js; o shell por cima dele -- o lexer, os pipes, os
+redirecionamentos, os globs, o editor de linha, o filesystem simulado -- foi
+escrito para este projeto e tem mais ou menos o tamanho que você imagina.
+
+A API é FastAPI. Ela tem cinco rotas e o trabalho inteiro dela é ler o /proc e
+entregar em JSON.
+
+
+DOOM
+
+O `doom` é o jogo de verdade: doomgeneric compilado para WebAssembly com o
+emscripten, a 320x200, sem SDL, sem canvas e sem som. Cada quadro é desenhado
+na própria grade de texto do terminal -- dois pixels verticais por célula de
+caractere, no cubo de cores 6x6x6 de um terminal de 256 cores, e só as células
+que mudaram são repintadas. O gargalo não é o jogo. É o xterm.js engolir os
+bytes.
+
+
+A FONTE
+
+JetBrains Mono, hospedada aqui a partir do release oficial e não do Google
+Fonts, porque os subsets do Google não trazem os caracteres de bloco e de
+desenho de caixa de que o banner do boot é inteiramente feito.
+
+
+A ÁRVORE
+
+Todo arquivo que você consegue dar `cat` existe como um .txt cru no
+repositório, em content/en e content/pt, e vira árvore na hora do build. As
+datas do `ls -l` são as datas dos commits que escreveram aqueles arquivos. Veja
+o /etc/fstab para o que está montado de onde.
+
+
+O QUE É MEDIDO E O QUE NÃO É
+
+Os números do Pi são lidos no momento em que você os pede, e quando não podem
+ser -- porque a máquina está fora, ou porque não é uma máquina Linux -- você é
+avisado, na própria resposta. Nenhum número aqui é enfeite.
+
+Nada sobre você é guardado além da primeira palavra de cada comando digitado, o
+que o /etc/privacy explica por inteiro e por antecipação.
+
+
+O CÓDIGO
+
+    github.com/OLuizFernando/portfolio
+
+Ele todo, inclusive o arquivo que você está lendo. Os deploys são manuais, de
+propósito: uma máquina, uma pessoa, e um script versionado junto com o resto.

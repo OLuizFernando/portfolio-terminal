@@ -1,0 +1,71 @@
+COLOPHON
+========
+
+What this site is made of, and what it costs to keep answering you.
+
+
+THE MACHINE
+
+A Raspberry Pi 5 with 8GB of memory, on a desk in Brazil, plugged into a
+domestic connection. nginx serves the static files and proxies /api to a
+uvicorn on 127.0.0.1:8000; a Cloudflare Tunnel is what puts the whole thing on
+the internet without opening a port on the router.
+
+That is the entire hosting bill. `neofetch` and `top` read that board.
+
+
+THE TERMINAL
+
+xterm.js with the WebGL renderer, Vite and TypeScript, and no framework at
+all -- there is no UI state for a React to manage, because there is no UI. The
+parser for ANSI, the text selection, the line wrapping and the cursor come free
+with xterm.js; the shell on top of it -- the lexer, the pipes, the redirects,
+the globs, the line editor, the simulated filesystem -- is written for this
+project and is about the size you would guess.
+
+The API is FastAPI. It has five routes and its whole job is to read /proc and
+hand it over as JSON.
+
+
+DOOM
+
+`doom` is the real game: doomgeneric compiled to WebAssembly with emscripten,
+at 320x200, no SDL, no canvas and no sound. Each frame is drawn into the text
+grid of the terminal itself -- two vertical pixels per character cell, in the
+6x6x6 colour cube of a 256-colour terminal, with only the cells that changed
+being repainted. The bottleneck is not the game. It is xterm.js swallowing the
+bytes.
+
+
+THE FONT
+
+JetBrains Mono, self-hosted from the official release rather than from Google
+Fonts, because the Google subsets do not carry the block and box-drawing
+characters that the boot banner is entirely made of.
+
+
+THE TREE
+
+Every file you can `cat` lives as a plain .txt in the repository, under
+content/en and content/pt, and is turned into the tree at build time. The dates
+in `ls -l` are the dates of the commits that wrote those files. See /etc/fstab
+for what is mounted from where.
+
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+The numbers from the Pi are read at the moment you ask for them, and when they
+cannot be -- because the machine is down, or because it is not a Linux box --
+you are told, in the reply. No number here is decoration.
+
+Nothing about you is stored beyond the first word of each command you type,
+which /etc/privacy explains in full and in advance.
+
+
+THE CODE
+
+    github.com/OLuizFernando/portfolio
+
+All of it, including the file you are reading. Deploys are manual, on purpose:
+one machine, one person, and a script that is versioned along with everything
+else.

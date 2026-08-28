@@ -1,0 +1,40 @@
+# /etc/fstab: de onde vem cada parte desta máquina.
+#
+# Nada aqui embaixo é disco. A árvore em que você está pisando foi entregue ao
+# seu navegador no boot e vive na memória desta aba, que é o motivo de dar para
+# sobreviver a um `rm -rf /` e de tudo que você escrever sumir no reload.
+
+# <origem>       <ponto de montagem>        <tipo>     <opções>
+manifest.json    /                          memfs      rw,volatile,lang=pt
+registro         /usr/bin                   autofs     ro,gerado
+pi:/api          /proc                      nfs        ro,soft,sintetico-ok
+localStorage     /home/guest/.bash_history  browserfs  rw,persistente
+
+
+NOTAS
+
+manifest.json
+    Todo .txt que você consegue dar `cat` foi escrito no repositório, em
+    content/en ou content/pt, e assado dentro do JavaScript na hora do build. É
+    de lá que o `ls -l` tira as datas: o mtime de um arquivo é a data do último
+    commit que o tocou. Remontar é o que o `lang` faz -- mesma árvore, outro
+    idioma, mesmos caminhos, e por isso você continua no diretório em que
+    estava.
+
+registro
+    O /usr/bin não é um diretório que alguém mantém. Ele é escrito no boot a
+    partir da lista dos comandos que existem de fato, então não tem como sair
+    de sincronia com o `help`.
+
+pi:/api
+    O /proc é a única montagem que sai do seu navegador. Uptime, temperatura,
+    memória, discos e processos são lidos do /proc de verdade do Raspberry Pi
+    que está te respondendo, por HTTPS, na hora em que você pede. Se aquela
+    máquina estiver fora, os comandos dizem isso em vez de inventar número. Se
+    ela estiver de pé mas não for Linux -- quando eu rodo isto num notebook --
+    a resposta vem marcada com `synthetic: true` e o terminal imprime o aviso.
+
+localStorage
+    Seu histórico e suas preferências, tamanho de fonte e CRT, são escritos por
+    este navegador e lidos por este navegador. Não são enviados a lugar nenhum.
+    Limpar os dados deste site apaga os dois. Veja /etc/privacy.

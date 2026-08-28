@@ -469,10 +469,18 @@ para 0,2ms.
 lendo e montando a geometria, não tem a ver com o terminal. Aceito: acontece uma
 vez por nível.
 
-**Ainda não medido:** o custo de _parse_ e desenho do xterm.js para os ~10KB de
-frame a 35Hz (~350KB/s). Não deu para medir em aba automatizada, porque o
-navegador estrangula o `requestAnimationFrame` de aba oculta. O HUD do
-`doom --fps` mostra o número real numa janela de verdade.
+**Volume medido, custo de parse ainda não** (2026-08-28). Os bytes por quadro
+saíram menores do que a estimativa de ~10KB: com o demo rodando a 133×38, o diff
+de um tic é **1671 B em mono**, ou ~57 kB/s a 35Hz. Colorido são 10054 B, ~344
+kB/s — ver a seção de cor.
+
+O que continua sem medida é o **tempo** que o xterm.js gasta para engolir isso.
+Aba automatizada estrangula o `requestAnimationFrame`, então fps medido por
+screenshot não vale (o HUD marcou 0,9 fps numa aba dirigida). Os bytes acima são
+confiáveis porque saem do próprio renderizador, não do relógio: instanciando o
+módulo na página e mandando renderizar o mesmo quadro nos dois modos, o número
+não depende de quantas vezes por segundo o navegador deixou o laço rodar. Para o
+tempo, o `doom --fps` numa janela de verdade continua sendo a única fonte.
 
 ### Como está montado
 
@@ -495,10 +503,25 @@ navegador estrangula o `requestAnimationFrame` de aba oculta. O HUD do
   ela, uma cena parada com tremor de ±6 níveis custa 10KB por quadro para não
   mudar nada na tela; de 8 para cima o custo é zero. Está em 24, metade de um
   degrau do cubo.
-- **Custo medido** (grade 160×48, fora do navegador): +6% de bytes por quadro em
-  cena chapada, +41% em gradiente. Ruído por pixel chega a +966%, mas não é o
-  DOOM: textura tem coerência espacial. O número real de uma partida sai no
-  `doom --fps --color`.
+- **Custo medido no DOOM de verdade** (2026-08-28, grade 133×38, demo rodando,
+  o mesmo quadro renderizado nos dois modos): o diff de um tic sai a **1671 B em
+  mono e 10054 B em cor, 6×**. A 35Hz são 57 kB/s contra **344 kB/s**. O quadro
+  cheio dá 5,0×, e a razão se mantém entre 100×30 e 200×60 (~7 bytes por célula
+  colorida), então não é efeito da resolução.
+
+  A primeira estimativa deste documento dizia +41%, medida em gradientes
+  sintéticos, e estava errada pelo motivo que interessa registrar: **a textura
+  do DOOM não tem coerência espacial na escala da célula.** Ela é pontilhada, e
+  depois da reamostragem em caixa duas células vizinhas quase nunca caem no
+  mesmo índice do cubo. Os trechos de cor constante ficam com ~1,5 célula, então
+  quase toda célula paga os 11 bytes do seu próprio SGR. Cena sintética chapada
+  ou suave não prevê isso, e não serve para dimensionar este caminho.
+- **Se um dia precisar baratear**, o lever não é a zona morta (ela é temporal, e
+  já faz o trabalho dela): é agrupar por proximidade **espacial** — reusar a cor
+  do vizinho quando o RGB estiver perto o bastante, em vez de emitir um SGR
+  novo. Baixar para 16 cores é a outra via, 5 bytes por troca em vez de 11.
+  Nenhuma das duas foi feita: a 344 kB/s o jogo roda, e o custo só importa se
+  alguém sentir engasgo.
 - **O laço mora no JS**, não no C: sem `emscripten_set_main_loop`, sem asyncify.
   O navegador nunca perde o controle do frame.
 - **Buffer alternativo de tela** (`\x1b[?1049h`), como qualquer programa de

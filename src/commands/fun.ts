@@ -33,7 +33,7 @@ const sudo: CommandSpec = {
     'There is no password, because there is nothing here worth one. You are a\n' +
     'guest on a machine that is not yours, but everything this shell can reach\n' +
     'is a copy that was handed to your browser at boot. Break it and you break\n' +
-    'your own tab — the Raspberry Pi never hears about it.\n\n' +
+    'your own tab, and the Raspberry Pi never hears about it.\n\n' +
     'Most commands do not care whether you used sudo. Exactly one does, and it\n' +
     'is not in any list.',
   run({ argv, stdin, piped, ctx }: Invocation) {
@@ -339,7 +339,7 @@ const crt: CommandSpec = {
     '  crt on     force on\n' +
     '  crt off    force off\n\n' +
     'It is remembered in this browser, like the font size. It costs nothing to\n' +
-    'the machine on the other side — the effect is entirely on your screen.',
+    'the machine on the other side: the effect is entirely on your screen.',
   run({ argv, ctx }: Invocation) {
     const argument = argv[1];
     if (argv.length > 2 || (argument !== undefined && argument !== 'on' && argument !== 'off')) {

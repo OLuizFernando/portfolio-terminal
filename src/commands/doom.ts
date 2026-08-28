@@ -15,7 +15,7 @@ const doom: CommandSpec = {
   summary: 'play DOOM',
   usage: 'doom [--fps] [--font=<px>]',
   man:
-    'Runs DOOM inside this terminal. Not in a canvas on top of it — the frames\n' +
+    'Runs DOOM inside this terminal. Not in a canvas on top of it: the frames\n' +
     'are drawn as characters in the same text grid you are typing into.\n\n' +
     '  arrows / WASD   move and turn\n' +
     '  ctrl            fire\n' +
@@ -27,7 +27,7 @@ const doom: CommandSpec = {
     `  --font=<px>     character size while playing, ${MIN_FONT_SIZE} to ${MAX_FONT_SIZE}\n\n` +
     'By default the picture uses the grid your terminal already has, so a bigger\n' +
     'window means a sharper DOOM. A smaller --font packs in more characters for a\n' +
-    'sharper picture, at the cost of more drawing per frame — if it starts to\n' +
+    'sharper picture, at the cost of more drawing per frame. If it starts to\n' +
     'stutter, go back up. Your shell keeps its own size either way.\n\n' +
     'All of this runs in your browser, not on the server.\n\n' +
     'Needs a keyboard, so it is desktop only. The game data is about 4MB and is\n' +

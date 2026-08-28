@@ -55,7 +55,7 @@ const date: CommandSpec = {
   name: 'date',
   summary: 'print the current date and time',
   usage: 'date',
-  man: 'Prints your clock, in your timezone — not the machine\'s. The Pi lives in\nBrazil; you may not.',
+  man: 'Prints your clock, in your timezone, not the machine\'s. The Pi lives in\nBrazil; you may not.',
   run() {
     const now = new Date();
     // O deslocamento do JS é invertido em relação ao que o `date` imprime.

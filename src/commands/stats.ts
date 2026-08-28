@@ -65,7 +65,7 @@ const stats: CommandSpec = {
   man:
     'What visitors have been typing into this terminal.\n\n' +
     'Two rankings: the commands people run, and the things they typed that are\n' +
-    'not commands here — which is the most honest list of what is missing.\n\n' +
+    'not commands here, which is the most honest list of what is missing.\n\n' +
     'The recording keeps the first word of each line and the country it came\n' +
     'from. No IP, no cookie, no session identifier, not even a clock: the server\n' +
     'dates each line on arrival. `cat /etc/privacy` says it in full.\n\n' +

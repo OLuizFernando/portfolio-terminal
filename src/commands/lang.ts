@@ -12,7 +12,7 @@ const lang: CommandSpec = {
     '  lang <code>     switch to it\n\n' +
     'It changes the content of the files and the shell along with it: help, the\n' +
     'manuals, the error messages, and the labels of free, df and top. What does\n' +
-    'not change is command names and flags — `ls` and `-l` are the interface of\n' +
+    'not change is command names and flags. `ls` and `-l` are the interface of\n' +
     'the machine, and no locale on earth translates those. The kernel lines at\n' +
     'boot stay too: they come from the kernel, which speaks English in every\n' +
     'language.\n\n' +

@@ -227,7 +227,7 @@ const man: CommandSpec = {
     const page = docs(spec);
     const section = t().manSections;
     const body = page.man ?? page.summary.charAt(0).toUpperCase() + page.summary.slice(1) + '.';
-    return ok(`\x1b[1m${section.name}\x1b[0m\n  ${spec.name} — ${page.summary}\n\n\x1b[1m${section.usage}\x1b[0m\n  ${page.usage}\n\n\x1b[1m${section.description}\x1b[0m\n${body
+    return ok(`\x1b[1m${section.name}\x1b[0m\n  ${spec.name} - ${page.summary}\n\n\x1b[1m${section.usage}\x1b[0m\n  ${page.usage}\n\n\x1b[1m${section.description}\x1b[0m\n${body
       .split('\n')
       .map((line) => (line ? `  ${line}` : ''))
       .join('\n')}\n`);

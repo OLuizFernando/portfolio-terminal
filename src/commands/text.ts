@@ -238,7 +238,7 @@ const uniq: CommandSpec = {
   name: 'uniq',
   summary: 'collapse repeated adjacent lines',
   usage: 'uniq [-c] [-d] [file...]',
-  man: 'Collapses repeated ADJACENT lines — sort first if that matters.\n\n  -c  prefix each line with how many times it occurred\n  -d  print only the lines that repeated',
+  man: 'Collapses repeated ADJACENT lines. Sort first if that matters.\n\n  -c  prefix each line with how many times it occurred\n  -d  print only the lines that repeated',
   run({ argv, stdin, ctx }: Invocation) {
     const { flags, operands, error } = shortFlags(argv, 'cd', 'uniq');
     if (error) return fail(error, 2);

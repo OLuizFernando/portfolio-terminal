@@ -212,7 +212,7 @@ export const en: Messages = {
   fortuneEmpty: 'fortune: no fortunes found\n',
 
   doomNeedsKeyboard:
-    'doom: needs a keyboard — arrows, ctrl and space at the same time.\n' +
+    'doom: needs a keyboard: arrows, ctrl and space at the same time.\n' +
     'Come back from a desktop and it will be here.\n',
   doomLoading: 'loading DOOM (about 4MB, once)...\n',
   doomFontRange: (min, max) => `doom: --font must be between ${min} and ${max}\n`,
@@ -237,24 +237,35 @@ export const en: Messages = {
   },
   rmRemoved: (path, isDir) => (isDir ? `removed directory '${path}'` : `removed '${path}'`),
   recoveryText: [
-    'You ran rm as root against /, and it ran.',
+    'Congratulations. You did it. You actually did it.',
     '',
-    'Every file you could reach is gone — the listing you just watched go by was',
-    'the whole machine. The shell survived because it was never on a disk: it',
-    'lives in the tab you are reading this in, and so did everything you deleted.',
-    'The Raspberry Pi on the other side of this connection never saw the command.',
-    'What you had was a copy, handed to your browser at boot.',
+    'You ran rm as root against the root of the filesystem, on a stranger\'s',
+    'machine, on a page you opened maybe ninety seconds ago, and it ran. You',
+    'watched a career go past and disappear, one line at a time. The degree. The',
+    'projects. The little file where he introduces himself to whoever drops by.',
+    'All of it, because you wanted to know whether it would really let you.',
     '',
-    'This file survived because it is immutable, and it is immutable because it is',
-    'the way back:',
+    'It let you.',
     '',
-    '    reboot        remount the filesystem and start the machine again',
+    'And here you are, standing in an empty machine, reading the one file that is',
+    'left. Take a moment. Was it everything you hoped it would be?',
     '',
-    'Reloading the page does the same thing, and takes longer.',
+    'The Raspberry Pi, incidentally, heard nothing about any of this. It is on a',
+    'desk in Brazil and it is perfectly fine. What you destroyed was a copy,',
+    'handed to your browser at boot, yours and nobody else\'s. You have broken',
+    'nothing but your own tab. That is either a relief or a disappointment, and',
+    'only you know which.',
+    '',
+    'This file survived because it is immutable, and it is immutable because',
+    'somebody, at some point, foresaw you.',
+    '',
+    '    reboot        puts it all back, as though you had never been here',
+    '',
+    'Go ahead. Nobody has to know.',
   ],
 
   rebootPiped: 'reboot: cannot write to a pipe\n',
-  topPiped: 'top: cannot write to a pipe — try `ps` instead\n',
+  topPiped: 'top: cannot write to a pipe. Try `ps` instead\n',
 
   freeHeader: ['', 'total', 'used', 'free', 'shared', 'buff/cache', 'available'],
   freeRows: { mem: 'Mem:', swap: 'Swap:' },
@@ -269,7 +280,7 @@ export const en: Messages = {
   topSwap: (total, free, used, available) =>
     `MiB Swap: ${total} total, ${free} free, ${used} used. ${available} avail Mem`,
   topColumns: ['PID', 'USER', '%CPU', '%MEM', 'RES', 'S', 'TIME+', 'COMMAND'],
-  topQuit: (synthetic) => (synthetic ? 'synthetic data — press q to quit' : 'press q to quit'),
+  topQuit: (synthetic) => (synthetic ? 'synthetic data, press q to quit' : 'press q to quit'),
 
   uptimeLine: (time, up, load) => ` ${time} up ${up},  load average: ${load}\n`,
   neofetch: {
@@ -284,7 +295,7 @@ export const en: Messages = {
     temp: 'Temp',
     memory: 'Memory',
     disk: 'Disk (/)',
-    synthetic: 'NOTE: synthetic data — this is not the Pi.',
+    synthetic: 'NOTE: synthetic data. This is not the Pi.',
   },
 
   statsEmpty: 'Nothing recorded yet. You are early.',
@@ -309,14 +320,14 @@ export const en: Messages = {
     disk: 'disk',
     note: 'NOTE',
   },
-  bootSynthetic: 'synthetic data — this is not the Pi',
+  bootSynthetic: 'synthetic data. This is not the Pi',
   bootWelcome: 'This is a portfolio with no interface. It has a shell instead.',
   bootHelpHint: "Type 'help' for the handful of commands, or 'ls' to just look around.",
 
   chips: {
     ls: 'list this directory',
     cdUp: 'go up one directory',
-    cat: 'read a file — pick it with Tab',
+    cat: 'read a file, pick it with Tab',
     tab: 'complete what is typed',
     previous: 'previous command',
     help: 'list the commands',

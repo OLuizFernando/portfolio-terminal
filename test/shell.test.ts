@@ -677,7 +677,7 @@ await check(
 await check('ls /', (o) => o.trim() === 'RECOVERY.txt', 'do apagamento sobra só o RECOVERY.txt');
 await check('ls', has("cannot access '.'"), 'o home sumiu debaixo do visitante, e o shell segue de pé');
 await check('help --all', has('reboot'), 'os comandos nunca estiveram no disco');
-await check('cat /RECOVERY.txt', has('and it ran', 'reboot'), 'o sobrevivente diz como voltar');
+await check('cat /RECOVERY.txt', has('It let you.', 'reboot'), 'o sobrevivente diz como voltar');
 
 await check('reboot | wc -l', has('cannot write to a pipe'));
 await check(
